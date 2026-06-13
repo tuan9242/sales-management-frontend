@@ -7,7 +7,7 @@ const api = axios.create({
   baseURL: GATEWAY_URL,
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/env.json',
+    'Content-Type': 'application/json',
     'Accept': 'application/json',
   }
 });
@@ -31,10 +31,14 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Token hết hạn hoặc không hợp lệ -> đăng xuất người dùng
+      // Nếu là request gọi API Login bị sai mật khẩu thì chỉ trả về lỗi, KHÔNG redirect
+      if (error.config && error.config.url && error.config.url.includes('/api/auth/login')) {
+        return Promise.reject(error);
+      }
+
+      // Token hết hạn hoặc gọi API khác không có quyền -> đăng xuất và đá về trang login
       localStorage.removeItem('jwt_token');
       localStorage.removeItem('user_info');
-      // Tùy chọn: Chuyển hướng người dùng về trang login
       window.location.href = '/login';
     }
     return Promise.reject(error);

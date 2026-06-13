@@ -9,49 +9,81 @@ export const useAuthStore = defineStore('auth', () => {
   const error = ref(null);
 
   const isAuthenticated = computed(() => !!token.value);
-  const userRole = computed(() => user.value?.role || null);
+  const userRole = computed(() => {
+    if (!user.value) return null;
+    // Ánh xạ enum Role dạng số từ Backend sang dạng Chuỗi cho Vue Router
+    const roleMap = {
+      0: 'Admin',
+      1: 'Sales',
+      2: 'Warehouse',
+      3: 'Customer',
+      'Admin': 'Admin',
+      'Sales': 'Sales',
+      'Warehouse': 'Warehouse',
+      'Customer': 'Customer'
+    };
+    return roleMap[user.value.role] ?? user.value.role;
+  });
 
   const hasRole = (roles) => {
-    if (!userRole.value) return false;
+    const currentRole = userRole.value;
+    if (!currentRole) return false;
     if (Array.isArray(roles)) {
-      return roles.includes(userRole.value);
+      return roles.includes(currentRole);
     }
-    return userRole.value === roles;
+    return currentRole === roles;
   };
 
-  const login = async (username, password) => {
+  const login = async (email, password) => {
     loading.value = true;
     error.value = null;
     try {
-      // Demo mock login nếu backend chưa khởi chạy hoặc gặp lỗi đăng nhập
-      // Nhóm 6 sẽ triển khai API thực tế tại route /api/users/login qua Gateway
       let data;
-      if (username === 'admin' || username === 'sales' || username === 'warehouse') {
-        // Mock dữ liệu đăng nhập local phục vụ việc test giao diện của các nhóm
+      // Mock login nếu nhập 'admin', 'sales', 'warehouse' để các nhóm khác test không cần chạy backend
+      if (email === 'admin' || email === 'sales' || email === 'warehouse') {
         data = {
-          token: 'mock-jwt-token-xyz-123',
+          accessToken: 'mock-jwt-token-xyz-123',
           user: {
-            id: 1,
-            username: username,
-            displayName: username.toUpperCase(),
-            role: username === 'admin' ? 'Admin' : (username === 'sales' ? 'Sales' : 'Warehouse')
+            id: 'mock-id-1',
+            email: `${email}@shop.com`,
+            fullName: email.toUpperCase(),
+            role: email === 'admin' ? 'Admin' : (email === 'sales' ? 'Sales' : 'Warehouse')
           }
         };
       } else {
-        // Thực tế gọi API thông qua Gateway
-        const response = await api.post('/api/users/login', { username, password });
+        // Thực tế gọi API thông qua Gateway dẫn tới AuthService.cs
+        const response = await api.post('/api/auth/login', { email, password });
         data = response.data;
       }
 
-      token.value = data.token;
+      if (data.user.role === 3 || data.user.role === 'Customer') {
+        error.value = 'Tài khoản khách hàng không có quyền truy cập trang quản trị!';
+        return false;
+      }
+
+      token.value = data.accessToken;
       user.value = data.user;
       
-      localStorage.setItem('jwt_token', data.token);
+      localStorage.setItem('jwt_token', data.accessToken);
       localStorage.setItem('user_info', JSON.stringify(data.user));
       
       return true;
     } catch (err) {
-      error.value = err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại!';
+      error.value = err.response?.data?.message || err.response?.data?.errors?.[0] || 'Đăng nhập thất bại. Vui lòng kiểm tra lại!';
+      return false;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const register = async (email, password, fullName, phone) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      await api.post('/api/auth/register', { email, password, fullName, phone });
+      return true;
+    } catch (err) {
+      error.value = err.response?.data?.message || err.response?.data?.errors?.[0] || 'Đăng ký thất bại. Vui lòng kiểm tra lại!';
       return false;
     } finally {
       loading.value = false;
@@ -75,6 +107,7 @@ export const useAuthStore = defineStore('auth', () => {
     userRole,
     hasRole,
     login,
+    register,
     logout
   };
 });

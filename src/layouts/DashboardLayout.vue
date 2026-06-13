@@ -1,144 +1,110 @@
 <template>
-  <v-app id="inspire">
-    <!-- Sidebar Navigation -->
-    <v-navigation-drawer v-model="drawer" class="border-end-0 border-opacity-10 glass-sidebar" elevation="2">
-      <v-list-item class="py-6 px-4">
-        <template v-slot:prepend>
-          <v-icon color="primary" size="32" class="me-2">mdi-cube-outline</v-icon>
-        </template>
-        <v-list-item-title class="text-h6 font-weight-black tracking-wide text-gradient">
-          SALES SYSTEM
-        </v-list-item-title>
-      </v-list-item>
+  <div>
+    <!-- Sidebar -->
+    <nav class="fixed left-0 top-0 h-full flex flex-col z-50 bg-primary shadow-md w-60 docked h-screen">
+      <div class="p-md flex items-center gap-3">
+        <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="24" height="24" fill="transparent"/>
+          <path d="M3 9L12 4L21 9V15L12 20L3 15V9Z" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 4V20" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3 9L12 14L21 9" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M7 11.5V14.5" stroke="#89ceff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10.5 10V15" stroke="#89ceff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M14 12V15" stroke="#89ceff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <h1 class="text-headline-md font-headline-md font-bold text-surface-container-lowest leading-tight">InventoryPro</h1>
+          <p class="text-label-sm text-tertiary-fixed-dim opacity-70">Enterprise ERP</p>
+        </div>
+      </div>
+      <div class="mt-xl flex-1 overflow-y-auto hide-scrollbar">
+        <!-- Dashboard -->
+        <router-link to="/" custom v-slot="{ href, navigate, isActive }">
+          <a :href="href" @click="navigate" :class="isActive ? 'text-on-tertiary-container border-l-4 border-tertiary-fixed-dim bg-primary-container/20 py-3 px-4 flex items-center gap-3 transition-colors font-label-md text-label-md' : 'text-outline-variant hover:text-surface-container-lowest py-3 px-4 flex items-center gap-3 transition-colors font-label-md text-label-md hover:bg-primary-container/10'">
+            <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+            <span>Dashboard</span>
+          </a>
+        </router-link>
+        
+        <router-link to="/users" custom v-slot="{ href, navigate, isActive }">
+          <a :href="href" @click="navigate" :class="isActive ? 'text-on-tertiary-container border-l-4 border-tertiary-fixed-dim bg-primary-container/20 py-3 px-4 flex items-center gap-3 transition-colors font-label-md text-label-md' : 'text-outline-variant hover:text-surface-container-lowest py-3 px-4 flex items-center gap-3 transition-colors font-label-md text-label-md hover:bg-primary-container/10'">
+            <span class="material-symbols-outlined" data-icon="group">group</span>
+            <span>User Management</span>
+          </a>
+        </router-link>
 
-      <v-divider class="mb-4 mx-4 opacity-10"></v-divider>
+        <router-link to="/reports" custom v-slot="{ href, navigate, isActive }">
+          <a :href="href" @click="navigate" :class="isActive ? 'text-on-tertiary-container border-l-4 border-tertiary-fixed-dim bg-primary-container/20 py-3 px-4 flex items-center gap-3 transition-colors font-label-md text-label-md' : 'text-outline-variant hover:text-surface-container-lowest py-3 px-4 flex items-center gap-3 transition-colors font-label-md text-label-md hover:bg-primary-container/10'">
+            <span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+            <span>Reports</span>
+          </a>
+        </router-link>
 
-      <v-list nav>
-        <v-list-item
-          v-for="item in menuItems"
-          :key="item.title"
-          :to="item.to"
-          :prepend-icon="item.icon"
-          :title="item.title"
-          color="primary"
-          rounded="lg"
-          class="mb-1"
-          active-class="active-nav-item"
-        >
-          <template v-slot:append v-if="item.group">
-            <v-chip size="x-small" :color="item.groupColor" variant="flat" class="text-white">
-              N{{ item.group }}
-            </v-chip>
-          </template>
-        </v-list-item>
-      </v-list>
-    </v-navigation-drawer>
+        <router-link to="/products" custom v-slot="{ href, navigate, isActive }">
+          <a :href="href" @click="navigate" :class="isActive ? 'text-on-tertiary-container border-l-4 border-tertiary-fixed-dim bg-primary-container/20 py-3 px-4 flex items-center gap-3 transition-colors font-label-md text-label-md' : 'text-outline-variant hover:text-surface-container-lowest py-3 px-4 flex items-center gap-3 transition-colors font-label-md text-label-md hover:bg-primary-container/10'">
+            <span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+            <span>Inventory</span>
+          </a>
+        </router-link>
+        
+        <router-link to="/orders" custom v-slot="{ href, navigate, isActive }">
+          <a :href="href" @click="navigate" :class="isActive ? 'text-on-tertiary-container border-l-4 border-tertiary-fixed-dim bg-primary-container/20 py-3 px-4 flex items-center gap-3 transition-colors font-label-md text-label-md' : 'text-outline-variant hover:text-surface-container-lowest py-3 px-4 flex items-center gap-3 transition-colors font-label-md text-label-md hover:bg-primary-container/10'">
+            <span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+            <span>Orders</span>
+          </a>
+        </router-link>
 
-    <!-- App Bar -->
-    <v-app-bar class="px-3 border-bottom-0 glass-appbar" flat elevation="1">
-      <v-app-bar-nav-icon @click="drawer = !drawer" color="text-medium-emphasis"></v-app-bar-nav-icon>
+        <a class="text-outline-variant hover:text-surface-container-lowest py-3 px-4 flex items-center gap-3 transition-colors font-label-md text-label-md hover:bg-primary-container/10" href="#">
+          <span class="material-symbols-outlined" data-icon="settings">settings</span>
+          <span>Settings</span>
+        </a>
+      </div>
+      <div class="pb-md border-t border-primary-fixed-dim/10">
+        <a class="text-outline-variant hover:text-surface-container-lowest py-3 px-4 flex items-center gap-3 transition-colors font-label-md text-label-md hover:bg-primary-container/10" href="#">
+          <span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+          <span>User Profile</span>
+        </a>
+        <a class="text-outline-variant hover:text-surface-container-lowest py-3 px-4 flex items-center gap-3 transition-colors font-label-md text-label-md hover:bg-primary-container/10" href="#" @click.prevent="handleLogout">
+          <span class="material-symbols-outlined" data-icon="logout">logout</span>
+          <span>Logout</span>
+        </a>
+      </div>
+    </nav>
 
-      <v-spacer></v-spacer>
+    <!-- Top Bar -->
+    <header class="flex items-center justify-between w-full h-16 px-md ml-60 max-w-[calc(100%-240px)] fixed top-0 bg-surface-container-lowest border-b border-outline-variant z-40">
+      <div class="flex items-center gap-4 flex-1">
+        <div class="relative w-full max-w-md">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+          <input class="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-body-sm focus:ring-2 focus:ring-primary" placeholder="Tìm kiếm dữ liệu..." type="text"/>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button class="hover:bg-surface-container-low rounded-full p-2 transition-all duration-150">
+          <span class="material-symbols-outlined text-primary" data-icon="notifications">notifications</span>
+        </button>
+        <div class="h-8 w-8 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden ml-2">
+          <img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-9I53MkiFNfIUAc6_C6GoiCB1rxCp81REA4xGak9hlpUgx_MY1UIdc-IKZAHaKXgRGNntaTI4nBaQ3zPG-V5SZm2rR53mk6oR0LajIJwY3ytoEzo3ikuoqNj6FCAlvJU4sLM0mqk43HaT9mcYNBG_nLjMxwbjm9uZAztPd30a_BOgSO-ZXoRo1atq2Qotlo4mT2QvthCMfNz0sgkPb4cPoJBGNk47T_xAHM3uDPbFvqwYMqXhM5Cktj-JvfPn_kh5Gr9FG2wqhGY"/>
+        </div>
+      </div>
+    </header>
 
-      <!-- Theme Switcher -->
-      <v-btn icon class="me-2" @click="toggleTheme">
-        <v-icon>{{ theme.global.current.value.dark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}</v-icon>
-      </v-btn>
-
-      <!-- User Profile Menu -->
-      <v-menu min-width="200px" rounded="xl" transition="slide-y-transition">
-        <template v-slot:activator="{ props }">
-          <v-btn icon v-bind="props">
-            <v-avatar color="primary" size="36">
-              <span class="text-body-1 font-weight-bold text-white">{{ userInitial }}</span>
-            </v-avatar>
-          </v-btn>
-        </template>
-        <v-card class="pa-4 glass-card mt-2">
-          <div class="text-center">
-            <v-avatar color="primary" size="48" class="mb-2">
-              <span class="text-h5 font-weight-bold text-white">{{ userInitial }}</span>
-            </v-avatar>
-            <h3 class="text-subtitle-1 font-weight-bold">{{ authStore.user?.displayName }}</h3>
-            <p class="text-caption text-medium-emphasis mt-1">{{ authStore.user?.username }}</p>
-            <v-chip size="small" color="primary" variant="flat" class="mt-2 text-white">
-              Quyền: {{ authStore.userRole }}
-            </v-chip>
-            <v-divider class="my-4"></v-divider>
-            <v-btn color="error" block variant="tonal" rounded="lg" prepend-icon="mdi-logout" @click="handleLogout">
-              Đăng xuất
-            </v-btn>
-          </div>
-        </v-card>
-      </v-menu>
-    </v-app-bar>
-
-    <!-- Main Content -->
-    <v-main class="bg-content-gradient">
-      <v-container class="pa-6 pa-md-8" fluid>
-        <router-view></router-view>
-      </v-container>
-    </v-main>
-  </v-app>
+    <!-- Main Content Canvas -->
+    <main class="ml-60 pt-16 p-md min-h-screen">
+      <router-view></router-view>
+    </main>
+  </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useTheme } from 'vuetify';
 import { useAuthStore } from '../stores/auth';
 
-const theme = useTheme();
 const authStore = useAuthStore();
-const drawer = ref(true);
-
-const userInitial = computed(() => {
-  return authStore.user?.displayName?.charAt(0) || 'U';
-});
-
-const toggleTheme = () => {
-  theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark';
-};
 
 const handleLogout = () => {
   authStore.logout();
 };
-
-const menuItems = computed(() => {
-  const allItems = [
-    { title: 'Tổng quan Dashboard', icon: 'mdi-view-dashboard-outline', to: '/', group: 6, groupColor: 'info' },
-    { title: 'Sản phẩm & Tồn kho', icon: 'mdi-package-variant-closed', to: '/products', group: 5, groupColor: 'primary' },
-    { title: 'Đơn hàng & Bán lẻ', icon: 'mdi-cart-outline', to: '/orders', group: 4, groupColor: 'success' },
-    { title: 'Tài khoản & Phân quyền', icon: 'mdi-account-group-outline', to: '/users', group: 6, groupColor: 'info' },
-  ];
-  return allItems;
-});
 </script>
 
 <style scoped>
-.glass-sidebar {
-  background: rgba(30, 41, 59, 0.4) !important;
-  backdrop-filter: blur(20px);
-}
-.glass-appbar {
-  background: rgba(30, 41, 59, 0.4) !important;
-  backdrop-filter: blur(20px);
-}
-.glass-card {
-  background: rgba(30, 41, 59, 0.8) !important;
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-.bg-content-gradient {
-  background: radial-gradient(circle at 50% 50%, rgb(15, 23, 42) 0%, rgb(30, 41, 59) 100%);
-  min-height: 100vh;
-}
-.text-gradient {
-  background: linear-gradient(135deg, var(--v-theme-primary) 0%, var(--v-theme-secondary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.active-nav-item {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(34, 211, 238, 0.15) 100%) !important;
-  border-left: 4px solid var(--v-theme-primary);
-}
 </style>
