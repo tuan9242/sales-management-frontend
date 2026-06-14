@@ -46,12 +46,14 @@ const routes = [
       {
         path: 'users',
         name: 'Users',
-        component: UserList
+        component: UserList,
+        meta: { roles: ['Admin'] }
       },
       {
         path: 'reports',
         name: 'Reports',
-        component: ReportList
+        component: ReportList,
+        meta: { roles: ['Admin'] }
       }
     ]
   }
@@ -62,13 +64,16 @@ const router = createRouter({
   routes
 });
 
-// Navigation Guard kiểm tra trạng thái đăng nhập
+// Navigation Guard kiểm tra trạng thái đăng nhập và phân quyền
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
   
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login');
   } else if (to.meta.requiresGuest && authStore.isAuthenticated) {
+    next('/');
+  } else if (to.meta.roles && !authStore.hasRole(to.meta.roles)) {
+    // Không có quyền truy cập -> Quay về trang chủ
     next('/');
   } else {
     next();

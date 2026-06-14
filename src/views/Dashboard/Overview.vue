@@ -23,7 +23,7 @@
       <!-- Card 1 -->
       <div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant flex flex-col justify-between">
         <div class="flex justify-between items-start">
-          <span class="p-2 bg-primary-fixed text-on-primary-fixed rounded-lg material-symbols-outlined" data-icon="payments">payments</span>
+          <span class="p-2 bg-blue-50 text-blue-600 rounded-lg material-symbols-outlined" data-icon="payments">payments</span>
           <span class="text-label-sm font-label-sm text-green-600 bg-green-50 px-2 py-0.5 rounded-full">+12.5%</span>
         </div>
         <div class="mt-md">
@@ -34,7 +34,7 @@
       <!-- Card 2 -->
       <div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant flex flex-col justify-between">
         <div class="flex justify-between items-start">
-          <span class="p-2 bg-secondary-fixed text-on-secondary-fixed rounded-lg material-symbols-outlined" data-icon="trending_up">trending_up</span>
+          <span class="p-2 bg-indigo-50 text-indigo-600 rounded-lg material-symbols-outlined" data-icon="trending_up">trending_up</span>
           <span class="text-label-sm font-label-sm text-green-600 bg-green-50 px-2 py-0.5 rounded-full">+8.2%</span>
         </div>
         <div class="mt-md">
@@ -45,7 +45,7 @@
       <!-- Card 3 -->
       <div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant flex flex-col justify-between">
         <div class="flex justify-between items-start">
-          <span class="p-2 bg-tertiary-fixed text-on-tertiary-fixed rounded-lg material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+          <span class="p-2 bg-emerald-50 text-emerald-600 rounded-lg material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
           <span class="text-label-sm font-label-sm text-red-600 bg-red-50 px-2 py-0.5 rounded-full">-2.4%</span>
         </div>
         <div class="mt-md">
@@ -56,7 +56,7 @@
       <!-- Card 4 -->
       <div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant flex flex-col justify-between">
         <div class="flex justify-between items-start">
-          <span class="p-2 bg-surface-container-high text-on-surface-variant rounded-lg material-symbols-outlined" data-icon="person">person</span>
+          <span class="p-2 bg-amber-50 text-amber-600 rounded-lg material-symbols-outlined" data-icon="person">person</span>
           <span class="text-label-sm font-label-sm text-green-600 bg-green-50 px-2 py-0.5 rounded-full">+18%</span>
         </div>
         <div class="mt-md">
@@ -250,17 +250,17 @@ onMounted(() => {
         datasets: [{
           label: 'Tháng này',
           data: [400, 520, 480, 650, 590, 800, 856],
-          borderColor: '#00236f',
-          backgroundColor: 'rgba(0, 35, 111, 0.05)',
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37, 99, 235, 0.05)',
           tension: 0.4,
           fill: true,
           borderWidth: 3,
           pointRadius: 4,
-          pointBackgroundColor: '#00236f'
+          pointBackgroundColor: '#2563eb'
         }, {
           label: 'Tháng trước',
           data: [350, 410, 430, 400, 490, 520, 580],
-          borderColor: '#89ceff',
+          borderColor: '#6366f1',
           borderDash: [5, 5],
           tension: 0.4,
           fill: false,
@@ -294,7 +294,7 @@ onMounted(() => {
         labels: ['Điện tử', 'Gia dụng', 'Thời trang', 'Khác'],
         datasets: [{
           data: [45, 25, 20, 10],
-          backgroundColor: ['#00236f', '#505f76', '#89ceff', '#c5c5d3'],
+          backgroundColor: ['#2563eb', '#6366f1', '#38bdf8', '#cbd5e1'],
           borderWidth: 0,
           cutout: '75%'
         }]

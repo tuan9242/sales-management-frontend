@@ -21,14 +21,14 @@ export default createVuetify({
       light: {
         dark: false,
         colors: {
-          primary: '#00236f',
-          secondary: '#505f76',
-          background: '#f8f9ff',
+          primary: '#2563eb',
+          secondary: '#6366f1',
+          background: '#f8fafc',
           surface: '#ffffff',
-          error: '#ba1a1a',
-          info: '#36b6fb',
-          success: '#34D399',
-          warning: '#FBBF24',
+          error: '#ef4444',
+          info: '#3b82f6',
+          success: '#10b981',
+          warning: '#f59e0b',
         },
       },
       dark: {

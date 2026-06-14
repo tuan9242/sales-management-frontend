@@ -13,7 +13,7 @@
       {{ authStore.error }}
     </v-alert>
 
-    <!-- Ô nhập Tên hiển thị -->
+    <!-- Ô nhập Họ và tên -->
     <div class="input-group">
       <label class="input-label">Họ và tên</label>
       <v-text-field
@@ -22,8 +22,8 @@
         prepend-inner-icon="mdi-badge-account-outline"
         variant="outlined"
         density="comfortable"
-        bg-color="#f2f3f9"
-        color="#00236f"
+        bg-color="#f8fafc"
+        color="primary"
         rounded="lg"
         hide-details="auto"
         class="custom-text-field"
@@ -40,8 +40,8 @@
         prepend-inner-icon="mdi-account-outline"
         variant="outlined"
         density="comfortable"
-        bg-color="#f2f3f9"
-        color="#00236f"
+        bg-color="#f8fafc"
+        color="primary"
         rounded="lg"
         hide-details="auto"
         class="custom-text-field"
@@ -60,8 +60,8 @@
         :append-inner-icon="showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
         variant="outlined"
         density="comfortable"
-        bg-color="#f2f3f9"
-        color="#00236f"
+        bg-color="#f8fafc"
+        color="primary"
         rounded="lg"
         hide-details="auto"
         class="custom-text-field"
@@ -80,8 +80,8 @@
         :type="showPassword ? 'text' : 'password'"
         variant="outlined"
         density="comfortable"
-        bg-color="#f2f3f9"
-        color="#00236f"
+        bg-color="#f8fafc"
+        color="primary"
         rounded="lg"
         hide-details="auto"
         class="custom-text-field"
@@ -97,12 +97,12 @@
       type="button"
       @click.prevent="handleSubmit"
       block
-      color="#00236f"
+      color="primary"
       height="48"
       rounded="lg"
-      class="submit-btn text-white"
+      class="submit-btn text-white shadow-md shadow-primary/20"
       :loading="authStore.loading"
-      elevation="2"
+      elevation="0"
     >
       <span class="btn-text">Đăng ký ngay</span>
       <v-icon end size="18" class="ms-2">mdi-account-plus</v-icon>
@@ -174,21 +174,21 @@ const handleSubmit = async () => {
 .custom-text-field :deep(.v-field--focused .v-field__outline) {
   --v-field-border-width: 2px;
   --v-field-border-opacity: 1;
-  border-color: #00236f !important;
+  border-color: #2563eb !important;
 }
 
 .custom-text-field :deep(.v-field__input) {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #191c20;
+  color: #0f172a;
 }
 
 .custom-text-field :deep(.v-field__prepend-inner) {
-  color: #757682;
+  color: #94a3b8;
 }
 
 .custom-text-field :deep(.v-field__append-inner) {
-  color: #757682;
+  color: #94a3b8;
   cursor: pointer;
 }
 
@@ -206,11 +206,11 @@ const handleSubmit = async () => {
   margin-top: 16px;
   font-family: 'Inter', sans-serif;
   font-size: 13px;
-  color: #444651;
+  color: #475569;
 }
 
 .register-link {
-  color: #00236f;
+  color: #2563eb;
   text-decoration: none;
   font-weight: 600;
 }

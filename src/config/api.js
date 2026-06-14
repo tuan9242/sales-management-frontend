@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // URL của Ocelot API Gateway (đọc từ biến môi trường hoặc fallback về localhost:5000)
-const GATEWAY_URL = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:5000';
+const GATEWAY_URL = process.env.VUE_APP_API_GATEWAY_URL || 'http://localhost:5000';
 
 const api = axios.create({
   baseURL: GATEWAY_URL,

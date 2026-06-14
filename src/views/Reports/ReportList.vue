@@ -192,7 +192,6 @@ const renderChart = () => {
     setTimeout(renderChart, 500);
     return;
   }
-
   const labels = reportStore.dailyRevenues.map(r => formatDate(r.date));
   const data = reportStore.dailyRevenues.map(r => r.totalRevenue);
 
@@ -203,7 +202,7 @@ const renderChart = () => {
       datasets: [{
         label: 'Doanh thu (VNĐ)',
         data: data,
-        backgroundColor: '#00236f', // primary color
+        backgroundColor: '#2563eb', // primary color
         borderRadius: 4,
         maxBarThickness: 40
       }]

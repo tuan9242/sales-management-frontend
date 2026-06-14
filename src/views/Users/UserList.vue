@@ -494,32 +494,32 @@ const formatDate = (dateStr) => {
 
 const getRoleBadgeClass = (role) => {
   const r = formatRole(role);
-  if (r === 'Admin') return 'bg-primary-container/20 text-primary border border-primary/20';
-  if (r === 'Sales') return 'bg-green-100 text-green-700 border border-green-200';
-  if (r === 'Warehouse') return 'bg-orange-100 text-orange-700 border border-orange-200';
-  return 'bg-gray-100 text-gray-700';
+  if (r === 'Admin') return 'bg-blue-50 text-blue-700 border border-blue-200';
+  if (r === 'Sales') return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+  if (r === 'Warehouse') return 'bg-amber-50 text-amber-700 border border-amber-200';
+  return 'bg-slate-50 text-slate-700 border border-slate-200';
 };
 
 const getRoleBgColorClass = (role) => {
   const r = formatRole(role);
-  if (r === 'Admin') return 'bg-primary-fixed';
-  if (r === 'Sales') return 'bg-secondary-fixed';
-  if (r === 'Warehouse') return 'bg-tertiary-fixed';
-  return 'bg-surface-variant';
+  if (r === 'Admin') return 'bg-blue-50';
+  if (r === 'Sales') return 'bg-emerald-50';
+  if (r === 'Warehouse') return 'bg-amber-50';
+  return 'bg-slate-50';
 };
 
 const getRoleTextColorClass = (role) => {
   const r = formatRole(role);
-  if (r === 'Admin') return 'text-on-primary-fixed';
-  if (r === 'Sales') return 'text-on-secondary-fixed';
-  if (r === 'Warehouse') return 'text-on-tertiary-fixed';
-  return 'text-on-surface-variant';
+  if (r === 'Admin') return 'text-blue-600';
+  if (r === 'Sales') return 'text-emerald-600';
+  if (r === 'Warehouse') return 'text-amber-600';
+  return 'text-slate-650';
 };
 
 const getStatusIndicatorClass = (status) => {
-  if (status === 'Active' || status === 0) return 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]';
-  if (status === 'Blocked' || status === 2) return 'bg-error shadow-[0_0_8px_rgba(186,26,26,0.5)]';
-  return 'bg-outline-variant';
+  if (status === 'Active' || status === 0) return 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]';
+  if (status === 'Blocked' || status === 2) return 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]';
+  return 'bg-slate-350';
 };
 </script>
 
@@ -536,7 +536,7 @@ const getStatusIndicatorClass = (status) => {
   border-radius: 10px;
 }
 .permission-toggle:checked + .toggle-slider {
-  background-color: #00236f;
+  background-color: #2563eb;
 }
 .permission-toggle:checked + .toggle-slider::before {
   transform: translateX(16px);
