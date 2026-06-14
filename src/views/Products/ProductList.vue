@@ -182,7 +182,7 @@
             <h3 class="text-h6 font-weight-bold text-slate-900">Danh sách Phiếu nhập kho (Stock Receipts)</h3>
             <v-btn
               v-if="authStore.hasRole(['Admin', 'Warehouse'])"
-              color="success"
+              color="primary"
               prepend-icon="mdi-playlist-plus"
               class="rounded-xl shadow-md px-6 py-2 transition-all hover:-translate-y-[1px] hover:shadow-lg active:scale-98 text-white"
               elevation="2"
