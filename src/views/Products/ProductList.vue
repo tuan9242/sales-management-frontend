@@ -136,12 +136,6 @@
                           </template>
                           <v-list-item-title class="text-sm">{{ product.isActive ? 'Ngừng bán' : 'Khôi phục' }}</v-list-item-title>
                         </v-list-item>
-                        <v-list-item v-if="authStore.hasRole('Admin')" @click="handleDelete(product.id)" class="hover:bg-red-50">
-                          <template v-slot:prepend>
-                            <v-icon color="error" size="small">mdi-trash-can-outline</v-icon>
-                          </template>
-                          <v-list-item-title class="text-sm text-error">Xóa sản phẩm</v-list-item-title>
-                        </v-list-item>
                       </v-list>
                     </v-menu>
                   </td>
@@ -235,6 +229,47 @@
                     </td>
                   </tr>
 
+                  <!-- Đệ quy render danh mục con N cấp -->
+                  <template v-if="expandedCategories[cat.id] && cat.children && cat.children.length > 0">
+                    <tr
+                      v-for="item in flattenChildren(cat.children, cat.name, 1)"
+                      :key="`flat-${item.id}`"
+                      class="bg-slate-50/30 hover:bg-slate-100/50 transition-colors"
+                    >
+                      <td class="px-6 py-4 font-mono text-sm text-slate-450">#{{ item.id }}</td>
+                      <td class="px-6 py-4" :style="{ paddingLeft: `${item.depth * 32 + 24}px` }">
+                        <div class="d-flex align-center gap-2">
+                          <v-btn
+                            v-if="item.children && item.children.length > 0"
+                            icon size="x-small" variant="text" color="primary"
+                            @click="toggleCategoryExpand(item.id)"
+                            class="hover:bg-slate-100"
+                          >
+                            <v-icon>{{ expandedCategories[item.id] ? 'mdi-chevron-down' : 'mdi-chevron-right' }}</v-icon>
+                          </v-btn>
+                          <div v-else style="width: 32px"></div>
+                          <span class="font-semibold text-slate-700">{{ item.name }}</span>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 text-slate-600 text-sm">{{ item.description || '-' }}</td>
+                      <td class="px-6 py-4 font-mono text-sm">{{ item.sortOrder }}</td>
+                      <td class="px-6 py-4">
+                        <span class="text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-0.5 rounded-full">
+                          {{ item.parentName }}
+                        </span>
+                      </td>
+                      <td class="px-6 py-4" v-if="authStore.hasRole(['Admin', 'Warehouse'])">
+                        <div class="d-flex align-center">
+                          <v-btn icon size="x-small" color="primary" variant="text" class="me-2 hover:bg-slate-100" @click="openEditCategoryDialog(item)">
+                            <v-icon>mdi-pencil-outline</v-icon>
+                          </v-btn>
+                          <v-btn v-if="authStore.hasRole('Admin')" icon size="x-small" color="error" variant="text" class="hover:bg-slate-100" @click="handleDeleteCategory(item.id)">
+                            <v-icon>mdi-trash-can-outline</v-icon>
+                          </v-btn>
+                        </div>
+                      </td>
+                    </tr>
+                  </template>
                 </template>
 
               </tbody>
@@ -1039,20 +1074,8 @@ const saveProduct = async () => {
   }
 };
 
-const handleDelete = async (id) => {
-  if (confirm('Bạn có chắc chắn muốn ngừng bán sản phẩm này? (Soft Delete)')) {
-    const res = await productStore.deleteProduct(id);
-    if (res.success) {
-      showNotify('Đã chuyển sản phẩm sang trạng thái Ngừng bán!');
-    } else {
-      showNotify(res.message, 'error');
-    }
-  }
-};
-
-// Toggle product status (active/inactive)
-// deleteProduct (soft delete) -> isActive = false
-// restore: dùng updateProduct với isActive = true
+// Toggle product status: Ngừng bán (soft delete) / Khôi phục (update isActive = true)
+// Đây là hàm DUY NHẤT xử lý thay đổi trạng thái sản phẩm
 const toggleProductStatus = async (id, currentStatus) => {
   const message = currentStatus
     ? 'Bạn có chắc muốn ngừng bán sản phẩm này?'
