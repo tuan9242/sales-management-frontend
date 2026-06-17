@@ -312,7 +312,7 @@
                   <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Người tạo</th>
                   <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Trạng thái</th>
                   <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Ngày lập</th>
-                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500" v-if="authStore.hasRole('Admin')">Hành động</th>
+                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Hành động</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100">
@@ -341,30 +341,37 @@
                     </span>
                   </td>
                   <td class="px-6 py-4 text-sm text-slate-500">{{ formatDate(receipt.createdAt) }}</td>
-                  <td class="px-6 py-4" v-if="authStore.hasRole('Admin')">
+                  <td class="px-6 py-4">
                     <div class="d-flex align-center gap-2">
+                      <!-- Xem chi tiết phiếu nhập (luôn hiện) -->
                       <v-btn
-                        v-if="receipt.status !== 'Confirmed'"
-                        size="x-small" color="success" variant="flat" class="rounded-lg shadow-sm text-white font-weight-bold me-2"
-                        @click="handleConfirmReceipt(receipt.id)"
-                      >
-                        Duyệt
-                      </v-btn>
-                      <v-btn
-                        v-if="receipt.status !== 'Confirmed'"
-                        icon size="x-small" color="primary" variant="text" class="hover:bg-slate-100 me-1"
+                        icon size="x-small" color="info" variant="text" class="hover:bg-slate-100 me-1"
                         @click="openEditReceiptDialog(receipt)"
+                        title="Xem chi tiết"
                       >
-                        <v-icon>mdi-pencil-outline</v-icon>
+                        <v-icon>mdi-eye-outline</v-icon>
                       </v-btn>
-                      <v-btn
-                        v-if="receipt.status !== 'Confirmed'"
-                        icon size="x-small" color="error" variant="text" class="hover:bg-slate-100"
-                        @click="handleDeleteReceipt(receipt.id)"
-                      >
-                        <v-icon>mdi-trash-can-outline</v-icon>
-                      </v-btn>
-                      <span v-if="receipt.status === 'Confirmed'" class="text-slate-400 text-sm">-</span>
+                      <template v-if="authStore.hasRole('Admin') && receipt.status !== 'Confirmed'">
+                        <v-btn
+                          size="x-small" color="success" variant="flat" class="rounded-lg shadow-sm text-white font-weight-bold me-2"
+                          @click="handleConfirmReceipt(receipt.id)"
+                        >
+                          Duyệt
+                        </v-btn>
+                        <v-btn
+                          icon size="x-small" color="primary" variant="text" class="hover:bg-slate-100 me-1"
+                          @click="openEditReceiptDialog(receipt)"
+                        >
+                          <v-icon>mdi-pencil-outline</v-icon>
+                        </v-btn>
+                        <v-btn
+                          icon size="x-small" color="error" variant="text" class="hover:bg-slate-100"
+                          @click="handleDeleteReceipt(receipt.id)"
+                        >
+                          <v-icon>mdi-trash-can-outline</v-icon>
+                        </v-btn>
+                      </template>
+                      <span v-if="receipt.status === 'Confirmed' && !authStore.hasRole('Admin')" class="text-slate-400 text-sm">Đã duyệt</span>
                     </div>
                   </td>
                 </tr>
@@ -839,7 +846,10 @@ const detailsLoading = ref(false);
 // Category expand/collapse state
 const expandedCategories = ref({});
 const toggleCategoryExpand = (categoryId) => {
-  expandedCategories.value[categoryId] = !expandedCategories.value[categoryId];
+  // Spread để tạo object mới → Vue detect được reactive change
+  const updated = { ...expandedCategories.value };
+  updated[categoryId] = !updated[categoryId];
+  expandedCategories.value = updated;
 };
 
 const openDetailsDialog = async (id) => {
@@ -861,7 +871,9 @@ const imageFile = ref(null);
 const getImageUrl = (url) => {
   if (!url) return '';
   if (url.startsWith('http')) return url;
-  return `http://localhost:5000${url}`;
+  // Dùng GATEWAY_URL từ env thay vì hardcode localhost
+  const gateway = process.env.VUE_APP_API_GATEWAY_URL || 'http://localhost:5000';
+  return `${gateway}${url}`;
 };
 
 const editingProduct = ref({
