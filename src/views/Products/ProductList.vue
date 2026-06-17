@@ -161,7 +161,7 @@
                 </tr>
                 <tr v-else v-for="cat in flatCategoriesList" :key="cat.id" class="hover:bg-slate-50/50 transition-colors duration-150">
                   <td class="px-6 py-4 font-mono text-sm text-slate-450">#{{ cat.id }}</td>
-                  <td class="px-6 py-4 font-semibold text-slate-900">{{ cat.name }}</td>
+                  <td class="px-6 py-4 font-semibold text-slate-900" :style="{ paddingLeft: `${cat.depth * 40 + 24}px` }">{{ cat.name }}</td>
                   <td class="px-6 py-4 text-slate-600">{{ cat.description || '-' }}</td>
                   <td class="px-6 py-4 font-mono text-sm">{{ cat.sortOrder }}</td>
                   <td class="px-6 py-4">
