@@ -234,34 +234,9 @@
                       </div>
                     </td>
                   </tr>
-                  
-                  <tr v-if="expandedCategories[cat.id] && cat.children" v-for="child in cat.children" :key="`child-${child.id}`" class="bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
-                    <td class="px-6 py-4 font-mono text-sm text-slate-450">#{{ child.id }}</td>
-                    <td class="px-6 py-4 pl-12">
-                      <div class="d-flex align-center gap-2">
-                        <span style="border-left: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1; width: 16px; height: 24px; margin-top: -2px;" class="text-slate-300 inline-block"></span>
-                        <span class="font-semibold text-slate-700">{{ child.name }}</span>
-                      </div>
-                    </td>
-                    <td class="px-6 py-4 text-slate-600 text-sm">{{ child.description || '-' }}</td>
-                    <td class="px-6 py-4 font-mono text-sm">{{ child.sortOrder }}</td>
-                    <td class="px-6 py-4">
-                      <span class="text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-0.5 rounded-full">
-                        {{ cat.name }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-4" v-if="authStore.hasRole(['Admin', 'Warehouse'])">
-                      <div class="d-flex align-center">
-                        <v-btn icon size="x-small" color="primary" variant="text" class="me-2 hover:bg-slate-100" @click="openEditCategoryDialog(child)">
-                          <v-icon>mdi-pencil-outline</v-icon>
-                        </v-btn>
-                        <v-btn v-if="authStore.hasRole('Admin')" icon size="x-small" color="error" variant="text" class="hover:bg-slate-100" @click="handleDeleteCategory(child.id)">
-                          <v-icon>mdi-trash-can-outline</v-icon>
-                        </v-btn>
-                      </div>
-                    </td>
-                  </tr>
+
                 </template>
+
               </tbody>
             </table>
           </div>
@@ -938,6 +913,23 @@ const parentCategoriesList = computed(() => {
   return productStore.categories || [];
 });
 
+// Flatten children N levels - dùng cho template render danh mục con đệ quy
+const flattenChildren = (nodes, parentName, depth = 1) => {
+  const result = [];
+  for (const node of nodes) {
+    result.push({
+      ...node,
+      parentName,
+      depth,
+    });
+    // Nếu node đang được expand VÀ có children -> flatten tiếp
+    if (expandedCategories.value[node.id] && node.children && node.children.length > 0) {
+      result.push(...flattenChildren(node.children, node.name, depth + 1));
+    }
+  }
+  return result;
+};
+
 onMounted(() => {
   productStore.fetchProducts();
   productStore.fetchCategories();
@@ -1058,27 +1050,31 @@ const handleDelete = async (id) => {
   }
 };
 
-const handleRestoreProduct = async (id) => {
-  if (confirm('Bạn muốn khôi phục sản phẩm này sang trạng thái Đang bán?')) {
-    const res = await productStore.restoreProduct(id);
+// Toggle product status (active/inactive)
+// deleteProduct (soft delete) -> isActive = false
+// restore: dùng updateProduct với isActive = true
+const toggleProductStatus = async (id, currentStatus) => {
+  const message = currentStatus
+    ? 'Bạn có chắc muốn ngừng bán sản phẩm này?'
+    : 'Bạn muốn khôi phục sản phẩm này sang trạng thái Đang bán?';
+
+  if (!confirm(message)) return;
+
+  if (currentStatus) {
+    // Ngừng bán: gọi soft delete
+    const res = await productStore.deleteProduct(id);
+    if (res.success) {
+      showNotify('Đã chuyển sản phẩm sang trạng thái Ngừng bán!');
+    } else {
+      showNotify(res.message || 'Có lỗi xảy ra', 'error');
+    }
+  } else {
+    // Khôi phục: update isActive = true
+    const res = await productStore.updateProduct(id, { isActive: true });
     if (res.success) {
       showNotify('Đã khôi phục sản phẩm thành công!');
     } else {
-      showNotify(res.message, 'error');
-    }
-  }
-};
-
-// Toggle product status (active/inactive)
-const toggleProductStatus = async (id, currentStatus) => {
-  const action = currentStatus ? 'ngừng bán' : 'khôi phục';
-  const message = currentStatus ? 'Bạn có chắc muốn ngừng bán sản phẩm này?' : 'Bạn muốn khôi phục sản phẩm này?';
-  
-  if (confirm(message)) {
-    if (currentStatus) {
-      await handleDelete(id);
-    } else {
-      await handleRestoreProduct(id);
+      showNotify(res.message || 'Có lỗi khi khôi phục', 'error');
     }
   }
 };
