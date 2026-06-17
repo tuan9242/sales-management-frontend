@@ -231,6 +231,43 @@ export const useProductStore = defineStore('product', () => {
       return { success: false, message: err.response?.data?.message || 'Xác nhận phiếu nhập thất bại' };
     }
   };
+  /**
+   * Fetches detail of a single stock receipt by ID.
+   */
+  const fetchReceiptDetail = async (id) => {
+    try {
+      const response = await api.get(`/api/stock-receipts/${id}`);
+      return { success: true, data: response.data };
+    } catch (err) {
+      return { success: false, message: err.response?.data?.message || 'Lỗi tải chi tiết phiếu nhập' };
+    }
+  };
+
+  /**
+   * Updates an existing stock receipt (only drafts).
+   */
+  const updateReceipt = async (id, receiptData) => {
+    try {
+      const response = await api.put(`/api/stock-receipts/${id}`, receiptData);
+      await fetchReceipts(receiptsCurrentPage.value);
+      return { success: true, data: response.data };
+    } catch (err) {
+      return { success: false, message: err.response?.data?.message || 'Cập nhật phiếu nhập thất bại' };
+    }
+  };
+
+  /**
+   * Deletes a draft stock receipt.
+   */
+  const deleteReceipt = async (id) => {
+    try {
+      await api.delete(`/api/stock-receipts/${id}`);
+      await fetchReceipts(receiptsCurrentPage.value);
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: err.response?.data?.message || 'Xóa phiếu nhập thất bại' };
+    }
+  };
 
   return {
     // Products
@@ -266,5 +303,8 @@ export const useProductStore = defineStore('product', () => {
     fetchReceipts,
     createReceipt,
     confirmReceipt,
+    fetchReceiptDetail,
+    updateReceipt,
+    deleteReceipt,
   };
 });

@@ -237,8 +237,8 @@
                       class="bg-slate-50/30 hover:bg-slate-100/50 transition-colors"
                     >
                       <td class="px-6 py-4 font-mono text-sm text-slate-450">#{{ item.id }}</td>
-                      <td class="px-6 py-4" :style="{ paddingLeft: `${item.depth * 32 + 24}px` }">
-                        <div class="d-flex align-center gap-2">
+                      <td class="px-6 py-4">
+                        <div class="d-flex align-center gap-2" :style="{ marginLeft: `${item.depth * 40}px` }">
                           <v-btn
                             v-if="item.children && item.children.length > 0"
                             icon size="x-small" variant="text" color="primary"
