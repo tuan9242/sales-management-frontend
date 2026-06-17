@@ -97,8 +97,32 @@
                   </td>
                   <td class="px-6 py-4" v-if="authStore.hasRole(['Admin', 'Warehouse'])">
                     <div class="d-flex align-center">
-                      <v-btn icon size="x-small" color="primary" variant="text" class="me-2 hover:bg-slate-100" @click="openEditDialog(product)"><v-icon>mdi-pencil-outline</v-icon></v-btn>
-                      <v-btn v-if="authStore.hasRole('Admin')" icon size="x-small" color="error" variant="text" class="hover:bg-slate-100" @click="handleDelete(product.id)"><v-icon>mdi-trash-can-outline</v-icon></v-btn>
+                      <v-menu location="bottom end">
+                        <template v-slot:activator="{ props }">
+                          <v-btn icon v-bind="props" variant="text" size="small" color="primary" class="hover:bg-slate-100">
+                            <v-icon>mdi-dots-vertical</v-icon>
+                          </v-btn>
+                        </template>
+                        <v-list class="py-1" elevation="3" rounded="lg">
+                          <!-- Sửa -->
+                          <v-list-item v-if="authStore.hasRole(['Admin', 'Warehouse'])" @click="openEditDialog(product)" class="hover:bg-slate-100">
+                            <template v-slot:prepend>
+                              <v-icon color="primary" size="small" class="mr-2">mdi-pencil-outline</v-icon>
+                            </template>
+                            <v-list-item-title class="text-slate-700">Chỉnh sửa</v-list-item-title>
+                          </v-list-item>
+
+                          <v-divider class="my-1"></v-divider>
+
+                          <!-- Ngừng bán / Khôi phục -->
+                          <v-list-item v-if="authStore.hasRole('Admin')" @click="toggleProductStatus(product.id, product.isActive)" class="hover:bg-slate-100">
+                            <template v-slot:prepend>
+                              <v-icon :color="product.isActive ? 'error' : 'success'" size="small" class="mr-2">{{ product.isActive ? 'mdi-cancel' : 'mdi-restore' }}</v-icon>
+                            </template>
+                            <v-list-item-title :class="product.isActive ? 'text-error' : 'text-success'">{{ product.isActive ? 'Ngừng bán' : 'Khôi phục' }}</v-list-item-title>
+                          </v-list-item>
+                        </v-list>
+                      </v-menu>
                     </div>
                   </td>
                 </tr>
@@ -642,7 +666,7 @@ const flatCategories = computed(() => {
 // Flattened category list with parent names for the category table view
 const flatCategoriesList = computed(() => {
   const result = [];
-  const recurse = (nodes, parentName = null) => {
+  const recurse = (nodes, parentName = null, depth = 0) => {
     for (const node of nodes) {
       result.push({
         id: node.id,
@@ -650,10 +674,11 @@ const flatCategoriesList = computed(() => {
         description: node.description,
         parentCategoryId: node.parentCategoryId,
         sortOrder: node.sortOrder || 0,
-        parent: parentName
+        parent: parentName,
+        depth: depth
       });
       if (node.children && node.children.length > 0) {
-        recurse(node.children, node.name);
+        recurse(node.children, node.name, depth + 1);
       }
     }
   };
@@ -743,6 +768,20 @@ const saveProduct = async () => {
     showNotify(isEditMode.value ? 'Cập nhật sản phẩm thành công!' : 'Thêm sản phẩm mới thành công!');
   } else {
     showNotify(res.message, 'error');
+  }
+};
+
+const toggleProductStatus = async (id, currentStatus) => {
+  if (currentStatus) {
+    await handleDelete(id);
+  } else {
+    // If backend doesn't support restore, we use update to active
+    const res = await productStore.updateProduct(id, { isActive: true });
+    if (res.success) {
+      showNotify('Khôi phục sản phẩm thành công!');
+    } else {
+      showNotify(res.message, 'error');
+    }
   }
 };
 
