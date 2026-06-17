@@ -18,10 +18,16 @@ export const useProductStore = defineStore('product', () => {
 
   // ── Categories State ──
   const categories = ref([]);
+  const categoriesTotal = ref(0);
+  const categoriesCurrentPage = ref(1);
+  const categoriesTotalPages = ref(0);
   const categoriesLoading = ref(false);
 
   // ── Stock Receipts State ──
   const receipts = ref([]);
+  const receiptsTotal = ref(0);
+  const receiptsCurrentPage = ref(1);
+  const receiptsTotalPages = ref(0);
   const receiptsLoading = ref(false);
 
   // ── Low Stock Alerts ──
@@ -117,11 +123,19 @@ export const useProductStore = defineStore('product', () => {
   /**
    * Fetches category tree from Backend.
    */
-  const fetchCategories = async () => {
+  const fetchCategories = async (page = 1) => {
     categoriesLoading.value = true;
     try {
-      const response = await api.get('/api/categories');
-      categories.value = Array.isArray(response.data) ? response.data : [];
+      const params = { page, pageSize: pageSize.value };
+      const response = await api.get('/api/categories', { params });
+      if (response.data && response.data.data) {
+        categories.value = response.data.data;
+        categoriesTotal.value = response.data.totalCount || 0;
+        categoriesTotalPages.value = response.data.totalPages || 0;
+        categoriesCurrentPage.value = response.data.page || 1;
+      } else {
+        categories.value = Array.isArray(response.data) ? response.data : [];
+      }
     } catch {
       categories.value = [];
     } finally {
@@ -176,11 +190,14 @@ export const useProductStore = defineStore('product', () => {
   const fetchReceipts = async (page = 1, status = null) => {
     receiptsLoading.value = true;
     try {
-      const params = { page, pageSize: 20 };
+      const params = { page, pageSize: pageSize.value };
       if (status) params.status = status;
       const response = await api.get('/api/stock-receipts', { params });
       const result = response.data;
       receipts.value = result.data || [];
+      receiptsTotal.value = result.totalCount || 0;
+      receiptsTotalPages.value = result.totalPages || 0;
+      receiptsCurrentPage.value = result.page || 1;
     } catch {
       receipts.value = [];
     } finally {
@@ -232,6 +249,9 @@ export const useProductStore = defineStore('product', () => {
     fetchLowStock,
     // Categories
     categories,
+    categoriesTotal,
+    categoriesCurrentPage,
+    categoriesTotalPages,
     categoriesLoading,
     fetchCategories,
     createCategory,
@@ -239,6 +259,9 @@ export const useProductStore = defineStore('product', () => {
     deleteCategory,
     // Stock Receipts
     receipts,
+    receiptsTotal,
+    receiptsCurrentPage,
+    receiptsTotalPages,
     receiptsLoading,
     fetchReceipts,
     createReceipt,

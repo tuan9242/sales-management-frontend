@@ -105,6 +105,16 @@
               </tbody>
             </table>
           </div>
+          
+          <div class="mt-4 d-flex justify-center" v-if="productStore.totalPages > 1">
+            <v-pagination
+              v-model="productStore.currentPage"
+              :length="productStore.totalPages"
+              color="primary"
+              @update:modelValue="(val) => productStore.fetchProducts(val, searchProduct)"
+              rounded="circle"
+            ></v-pagination>
+          </div>
         </v-window-item>
 
         <!-- Categories Tab -->
@@ -174,6 +184,16 @@
               </tbody>
             </table>
           </div>
+
+          <div class="mt-4 d-flex justify-center" v-if="productStore.categoriesTotalPages > 1">
+            <v-pagination
+              v-model="productStore.categoriesCurrentPage"
+              :length="productStore.categoriesTotalPages"
+              color="primary"
+              @update:modelValue="(val) => productStore.fetchCategories(val)"
+              rounded="circle"
+            ></v-pagination>
+          </div>
         </v-window-item>
 
         <!-- Stock Tab -->
@@ -183,8 +203,8 @@
             <v-btn
               v-if="authStore.hasRole(['Admin', 'Warehouse'])"
               color="primary"
-              prepend-icon="mdi-playlist-plus"
-              class="rounded-xl shadow-md px-6 py-2 transition-all hover:-translate-y-[1px] hover:shadow-lg active:scale-98 text-white"
+              prepend-icon="mdi-plus"
+              class="rounded-xl shadow-md px-6 py-2 transition-all hover:-translate-y-[1px] hover:shadow-lg active:scale-98"
               elevation="2"
               @click="openReceiptDialog"
             >
@@ -246,6 +266,16 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <div class="mt-4 d-flex justify-center" v-if="productStore.receiptsTotalPages > 1">
+            <v-pagination
+              v-model="productStore.receiptsCurrentPage"
+              :length="productStore.receiptsTotalPages"
+              color="primary"
+              @update:modelValue="(val) => productStore.fetchReceipts(val)"
+              rounded="circle"
+            ></v-pagination>
           </div>
         </v-window-item>
       </v-window>
