@@ -1203,11 +1203,12 @@ const resolveCustomerId = async () => {
   return createRes.data?.id ?? createRes.data;
 };
 
-// Fire-and-forget: giảm tồn kho Team 5 qua /api/internal/stock/deduct
+// Fire-and-forget: giảm tồn kho Team 5 — gọi thẳng port 5002 vì gateway (5000) không route /api/internal
+const TEAM5_BASE = 'http://103.252.136.121:5002';
 const fireDecreaseStock = (orderId, items) => {
   const deductItems = items.filter(i => i.productId).map(i => ({ productId: i.productId, quantity: i.quantity }));
   if (deductItems.length === 0) return;
-  api.post('/api/internal/stock/deduct', { orderId, items: deductItems }).catch(() => {});
+  api.post(`${TEAM5_BASE}/api/internal/stock/deduct`, { orderId, items: deductItems }).catch(() => {});
 };
 
 // Khi đơn → Completed: fetch items nếu cần, trừ kho Team 5 + webhook Team 6
@@ -1277,12 +1278,13 @@ const submitOrder = async () => {
 
   submitting.value = true;
   const orderedItems = [...form.value.items];
+  const wasPaid = form.value.isPaid;
   try {
     const resolvedCustomerId = await resolveCustomerId();
     const orderRes = await api.post('/api/Orders', {
       customerId: resolvedCustomerId,
       discountAmount: form.value.discountAmount || 0,
-      isPaid: form.value.isPaid,
+      isPaid: wasPaid,
       paymentMethod: form.value.paymentMethod,
       note: form.value.note,
       items: orderedItems.map(i => ({
@@ -1299,7 +1301,7 @@ const submitOrder = async () => {
     notify(`Tạo đơn ${created.orderCode ?? ''} thành công!`);
 
     // Nếu khách TT ngay → coi là Completed: trừ kho + webhook
-    if (form.value.isPaid) {
+    if (wasPaid) {
       onOrderCompleted({ ...created, customerName: created.customerName ?? '' }, orderedItems);
     }
   } catch (e) {
