@@ -20,6 +20,7 @@ module.exports = defineConfig({
       '/api/products': { target: 'http://localhost:5002', changeOrigin: true },
       '/api/categories': { target: 'http://localhost:5002', changeOrigin: true },
       '/api/stock-receipts': { target: 'http://localhost:5002', changeOrigin: true },
+      '/api/internal': { target: 'http://localhost:5002', changeOrigin: true },
 
       // Team 6 – Auth, Users, Reports, Webhook
       '/api/auth': { target: 'http://localhost:5000', changeOrigin: true },

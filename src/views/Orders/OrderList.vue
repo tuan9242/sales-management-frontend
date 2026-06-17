@@ -1203,13 +1203,11 @@ const resolveCustomerId = async () => {
   return createRes.data?.id ?? createRes.data;
 };
 
-// Fire-and-forget: giảm tồn kho Team 5
-const fireDecreaseStock = (items) => {
-  for (const item of items) {
-    if (item.productId) {
-      api.post(`/api/products/${item.productId}/decrease-stock`, { quantity: item.quantity }).catch(() => {});
-    }
-  }
+// Fire-and-forget: giảm tồn kho Team 5 qua /api/internal/stock/deduct
+const fireDecreaseStock = (orderId, items) => {
+  const deductItems = items.filter(i => i.productId).map(i => ({ productId: i.productId, quantity: i.quantity }));
+  if (deductItems.length === 0) return;
+  api.post('/api/internal/stock/deduct', { orderId, items: deductItems }).catch(() => {});
 };
 
 // Khi đơn → Completed: fetch items nếu cần, trừ kho Team 5 + webhook Team 6
@@ -1223,7 +1221,7 @@ const onOrderCompleted = async (order, knownItems) => {
       items = detail.data?.items ?? detail.data?.orderItems ?? [];
     } catch { /* ignore */ }
   }
-  fireDecreaseStock(items);
+  fireDecreaseStock(order.id, items);
   api.post('/api/events/order-created', {
     orderId: order.id,
     customerId: order.customerId,
