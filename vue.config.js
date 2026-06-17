@@ -5,6 +5,13 @@ module.exports = defineConfig({
   devServer: {
     port: 3000,
     historyApiFallback: true,
-    allowedHosts: 'all'
+    allowedHosts: 'all',
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5198',
+        changeOrigin: true,
+        logLevel: 'debug'
+      }
+    }
   }
 });

@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver-db
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrong@Pass123
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+
+  redis:
+    image: redis:alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # ĐÂY LÀ CHỖ QUAN TRỌNG: Gọi thẳng Image đã đóng gói trên mạng
+  user-report-api:
+    image: hiepnguyen05/user-report-api:v1
+    container_name: user-report-api
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver-db,1433;Database=UserDB;User Id=sa;Password=YourStrong@Pass123;TrustServerCertificate=True;
+      - ConnectionStrings__Redis=redis-cache:6379
+    depends_on:
+      - sqlserver
+      - redis
+
+volumes:
+  sqlserver_data:
+  redis_data:
