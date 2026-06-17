@@ -83,13 +83,20 @@
         <button class="hover:bg-slate-100 rounded-full p-2 transition-all duration-150">
           <span class="material-symbols-outlined text-blue-500" data-icon="notifications">notifications</span>
         </button>
-        <div v-if="authStore.user" class="text-right hidden sm:block ml-2">
-          <p class="text-body-sm font-semibold text-slate-800 leading-none">{{ authStore.user.fullName || authStore.user.email }}</p>
-          <p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider mt-1">{{ authStore.userRole }}</p>
+        <div v-if="authStore.user" class="text-right hidden sm:block ml-2 mr-1">
+          <div class="flex items-center justify-end gap-1 mb-1">
+            <p class="text-body-sm font-bold text-slate-800 tracking-tight">{{ authStore.user.fullName || authStore.user.email }}</p>
+            <span class="material-symbols-outlined text-blue-500 text-[16px]" data-icon="verified">verified</span>
+          </div>
+          <div class="inline-flex items-center justify-end gap-1.5 px-2 py-0.5 rounded-full bg-blue-50/80 border border-blue-100/50 shadow-sm">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+            </span>
+            <p class="text-[10px] font-extrabold text-blue-700 uppercase tracking-widest">{{ authStore.userRole }}</p>
+          </div>
         </div>
-        <div class="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden ml-2">
-          <img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-9I53MkiFNfIUAc6_C6GoiCB1rxCp81REA4xGak9hlpUgx_MY1UIdc-IKZAHaKXgRGNntaTI4nBaQ3zPG-V5SZm2rR53mk6oR0LajIJwY3ytoEzo3ikuoqNj6FCAlvJU4sLM0mqk43HaT9mcYNBG_nLjMxwbjm9uZAztPd30a_BOgSO-ZXoRo1atq2Qotlo4mT2QvthCMfNz0sgkPb4cPoJBGNk47T_xAHM3uDPbFvqwYMqXhM5Cktj-JvfPn_kh5Gr9FG2wqhGY"/>
-        </div>
+
       </div>
     </header>
 

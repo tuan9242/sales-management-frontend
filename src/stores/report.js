@@ -4,6 +4,8 @@ import api from '../config/api';
 
 export const useReportStore = defineStore('report', () => {
   const dailyRevenues = ref([]);
+  const topProducts = ref([]);
+  const topCustomers = ref([]);
   const loading = ref(false);
   const error = ref(null);
 
@@ -29,10 +31,42 @@ export const useReportStore = defineStore('report', () => {
     }
   };
 
+  const fetchTopProducts = async (topN = 10, startDate = null, endDate = null) => {
+    try {
+      const params = { topN };
+      if (startDate) params.startDate = startDate.toISOString();
+      if (endDate) params.endDate = endDate.toISOString();
+
+      const response = await api.get('/api/reports/top-selling-products', { params });
+      topProducts.value = response.data || [];
+      return true;
+    } catch (err) {
+      console.error('Lỗi khi fetch top products:', err);
+      topProducts.value = [];
+      return false;
+    }
+  };
+
+  const fetchTopCustomers = async (topN = 10) => {
+    try {
+      const response = await api.get('/api/reports/top-customers', { params: { topN } });
+      topCustomers.value = response.data || [];
+      return true;
+    } catch (err) {
+      console.error('Lỗi khi fetch top customers:', err);
+      topCustomers.value = [];
+      return false;
+    }
+  };
+
   return {
     dailyRevenues,
+    topProducts,
+    topCustomers,
     loading,
     error,
-    fetchDailyRevenue
+    fetchDailyRevenue,
+    fetchTopProducts,
+    fetchTopCustomers
   };
 });
