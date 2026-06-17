@@ -59,24 +59,26 @@
           <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
             <table class="w-full text-left border-collapse text-slate-700">
               <thead>
-                <tr class="bg-slate-50 border-b border-slate-200">
-                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Mã sản phẩm</th>
-                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Tên sản phẩm</th>
-                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Danh mục</th>
-                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Giá nhập</th>
-                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Giá bán</th>
-                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Tồn kho</th>
-                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500" v-if="authStore.hasRole(['Admin', 'Warehouse'])">Hành động</th>
+                <tr>
+                  <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-left border-b border-slate-200">Mã SP</th>
+                  <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-left border-b border-slate-200">Ảnh</th>
+                  <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-left border-b border-slate-200">Tên sản phẩm</th>
+                  <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-left border-b border-slate-200">Danh mục</th>
+                  <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-left border-b border-slate-200">Giá nhập</th>
+                  <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-left border-b border-slate-200">Giá bán</th>
+                  <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-left border-b border-slate-200">Tồn kho / Ngưỡng</th>
+                  <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-left border-b border-slate-200">Trạng thái</th>
+                  <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-left border-b border-slate-200" v-if="authStore.hasRole(['Admin', 'Warehouse'])">Thao tác</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
+              <tbody class="divide-y divide-slate-100 bg-white">
                 <tr v-if="productStore.loading">
-                  <td colspan="7" class="text-center py-8">
+                  <td colspan="8" class="text-center py-8">
                     <v-progress-circular indeterminate color="primary"></v-progress-circular>
                   </td>
                 </tr>
                 <tr v-else-if="productStore.products.length === 0">
-                  <td colspan="7" class="text-center py-8 text-slate-400">
+                  <td colspan="8" class="text-center py-8 text-slate-400">
                     Không tìm thấy sản phẩm nào
                   </td>
                 </tr>
@@ -85,6 +87,12 @@
                     <span class="text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-1 rounded-md font-mono">
                       {{ product.code }}
                     </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <v-avatar rounded size="40" color="grey-lighten-3">
+                      <v-img v-if="product.imageUrl" :src="getImageUrl(product.imageUrl)" cover></v-img>
+                      <v-icon v-else color="grey">mdi-image-outline</v-icon>
+                    </v-avatar>
                   </td>
                   <td class="px-6 py-4 font-semibold text-slate-900">{{ product.name }}</td>
                   <td class="px-6 py-4 text-slate-600">{{ product.categoryName || 'Chưa phân loại' }}</td>
@@ -95,35 +103,47 @@
                       {{ product.quantityInStock }} / {{ product.minStockThreshold }}
                     </span>
                   </td>
+                  <td class="px-6 py-4">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold"
+                          :class="product.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'">
+                      {{ product.isActive ? 'Đang bán' : 'Ngừng bán' }}
+                    </span>
+                  </td>
                   <td class="px-6 py-4" v-if="authStore.hasRole(['Admin', 'Warehouse'])">
-                    <div class="d-flex align-center">
-                      <v-menu location="bottom end">
-                        <template v-slot:activator="{ props }">
-                          <v-btn icon v-bind="props" variant="text" size="small" color="primary" class="hover:bg-slate-100">
-                            <v-icon>mdi-dots-vertical</v-icon>
-                          </v-btn>
-                        </template>
-                        <v-list class="py-1" elevation="3" rounded="lg">
-                          <!-- Sửa -->
-                          <v-list-item v-if="authStore.hasRole(['Admin', 'Warehouse'])" @click="openEditDialog(product)" class="hover:bg-slate-100">
-                            <template v-slot:prepend>
-                              <v-icon color="primary" size="small" class="mr-2">mdi-pencil-outline</v-icon>
-                            </template>
-                            <v-list-item-title class="text-slate-700">Chỉnh sửa</v-list-item-title>
-                          </v-list-item>
-
-                          <v-divider class="my-1"></v-divider>
-
-                          <!-- Ngừng bán / Khôi phục -->
-                          <v-list-item v-if="authStore.hasRole('Admin')" @click="toggleProductStatus(product.id, product.isActive)" class="hover:bg-slate-100">
-                            <template v-slot:prepend>
-                              <v-icon :color="product.isActive ? 'error' : 'success'" size="small" class="mr-2">{{ product.isActive ? 'mdi-cancel' : 'mdi-restore' }}</v-icon>
-                            </template>
-                            <v-list-item-title :class="product.isActive ? 'text-error' : 'text-success'">{{ product.isActive ? 'Ngừng bán' : 'Khôi phục' }}</v-list-item-title>
-                          </v-list-item>
-                        </v-list>
-                      </v-menu>
-                    </div>
+                    <v-menu>
+                      <template v-slot:activator="{ props }">
+                        <v-btn icon size="x-small" variant="text" color="primary" v-bind="props" class="hover:bg-slate-100">
+                          <v-icon>mdi-dots-vertical</v-icon>
+                        </v-btn>
+                      </template>
+                      <v-list class="rounded-xl" density="compact">
+                        <v-list-item @click="openDetailsDialog(product.id)" class="hover:bg-slate-100">
+                          <template v-slot:prepend>
+                            <v-icon color="info" size="small">mdi-eye-outline</v-icon>
+                          </template>
+                          <v-list-item-title class="text-sm">Xem chi tiết</v-list-item-title>
+                        </v-list-item>
+                        <v-list-item @click="openEditDialog(product)" class="hover:bg-slate-100">
+                          <template v-slot:prepend>
+                            <v-icon color="primary" size="small">mdi-pencil-outline</v-icon>
+                          </template>
+                          <v-list-item-title class="text-sm">Sửa sản phẩm</v-list-item-title>
+                        </v-list-item>
+                        <v-divider class="my-1" v-if="authStore.hasRole('Admin')"></v-divider>
+                        <v-list-item v-if="authStore.hasRole('Admin')" @click="toggleProductStatus(product.id, product.isActive)" class="hover:bg-slate-100">
+                          <template v-slot:prepend>
+                            <v-icon :color="product.isActive ? 'warning' : 'success'" size="small">{{ product.isActive ? 'mdi-pause-circle-outline' : 'mdi-play-circle-outline' }}</v-icon>
+                          </template>
+                          <v-list-item-title class="text-sm">{{ product.isActive ? 'Ngừng bán' : 'Khôi phục' }}</v-list-item-title>
+                        </v-list-item>
+                        <v-list-item v-if="authStore.hasRole('Admin')" @click="handleDelete(product.id)" class="hover:bg-red-50">
+                          <template v-slot:prepend>
+                            <v-icon color="error" size="small">mdi-trash-can-outline</v-icon>
+                          </template>
+                          <v-list-item-title class="text-sm text-error">Xóa sản phẩm</v-list-item-title>
+                        </v-list-item>
+                      </v-list>
+                    </v-menu>
                   </td>
                 </tr>
               </tbody>
@@ -183,28 +203,65 @@
                     Không có danh mục nào
                   </td>
                 </tr>
-                <tr v-else v-for="cat in flatCategoriesList" :key="cat.id" class="hover:bg-slate-50/50 transition-colors duration-150">
-                  <td class="px-6 py-4 font-mono text-sm text-slate-450">#{{ cat.id }}</td>
-                  <td class="px-6 py-4 font-semibold text-slate-900" :style="{ paddingLeft: `${cat.depth * 40 + 24}px` }">{{ cat.name }}</td>
-                  <td class="px-6 py-4 text-slate-600">{{ cat.description || '-' }}</td>
-                  <td class="px-6 py-4 font-mono text-sm">{{ cat.sortOrder }}</td>
-                  <td class="px-6 py-4">
-                    <span v-if="cat.parent" class="text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-0.5 rounded-full">
-                       {{ cat.parent }}
-                    </span>
-                    <span v-else class="text-slate-400 text-xs font-medium">Cấp cao nhất</span>
-                  </td>
-                  <td class="px-6 py-4" v-if="authStore.hasRole(['Admin', 'Warehouse'])">
-                    <div class="d-flex align-center">
-                      <v-btn icon size="x-small" color="primary" variant="text" class="me-2 hover:bg-slate-100" @click="openEditCategoryDialog(cat)">
-                        <v-icon>mdi-pencil-outline</v-icon>
-                      </v-btn>
-                      <v-btn v-if="authStore.hasRole('Admin')" icon size="x-small" color="error" variant="text" class="hover:bg-slate-100" @click="handleDeleteCategory(cat.id)">
-                        <v-icon>mdi-trash-can-outline</v-icon>
-                      </v-btn>
-                    </div>
-                  </td>
-                </tr>
+                <template v-else v-for="cat in parentCategoriesList" :key="cat.id">
+                  <tr class="hover:bg-slate-50/50 transition-colors duration-150">
+                    <td class="px-6 py-4 font-mono text-sm text-slate-450">#{{ cat.id }}</td>
+                    <td class="px-6 py-4">
+                      <div class="d-flex align-center gap-2">
+                        <v-btn v-if="cat.children && cat.children.length > 0" icon size="x-small" variant="text" color="primary" @click="toggleCategoryExpand(cat.id)" class="hover:bg-slate-100">
+                          <v-icon>{{ expandedCategories[cat.id] ? 'mdi-chevron-down' : 'mdi-chevron-right' }}</v-icon>
+                        </v-btn>
+                        <div v-else style="width: 32px"></div>
+                        <span class="font-weight-black text-slate-900">{{ cat.name }}</span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 text-slate-600">{{ cat.description || '-' }}</td>
+                    <td class="px-6 py-4 font-mono text-sm">{{ cat.sortOrder }}</td>
+                    <td class="px-6 py-4">
+                      <span v-if="cat.children && cat.children.length > 0" class="text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full">
+                        {{ cat.children.length }} con
+                      </span>
+                      <span v-else class="text-slate-400 text-xs font-medium">Cấp cao nhất</span>
+                    </td>
+                    <td class="px-6 py-4" v-if="authStore.hasRole(['Admin', 'Warehouse'])">
+                      <div class="d-flex align-center">
+                        <v-btn icon size="x-small" color="primary" variant="text" class="me-2 hover:bg-slate-100" @click="openEditCategoryDialog(cat)">
+                          <v-icon>mdi-pencil-outline</v-icon>
+                        </v-btn>
+                        <v-btn v-if="authStore.hasRole('Admin')" icon size="x-small" color="error" variant="text" class="hover:bg-slate-100" @click="handleDeleteCategory(cat.id)">
+                          <v-icon>mdi-trash-can-outline</v-icon>
+                        </v-btn>
+                      </div>
+                    </td>
+                  </tr>
+                  
+                  <tr v-if="expandedCategories[cat.id] && cat.children" v-for="child in cat.children" :key="`child-${child.id}`" class="bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+                    <td class="px-6 py-4 font-mono text-sm text-slate-450">#{{ child.id }}</td>
+                    <td class="px-6 py-4 pl-12">
+                      <div class="d-flex align-center gap-2">
+                        <span style="border-left: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1; width: 16px; height: 24px; margin-top: -2px;" class="text-slate-300 inline-block"></span>
+                        <span class="font-semibold text-slate-700">{{ child.name }}</span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 text-slate-600 text-sm">{{ child.description || '-' }}</td>
+                    <td class="px-6 py-4 font-mono text-sm">{{ child.sortOrder }}</td>
+                    <td class="px-6 py-4">
+                      <span class="text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-0.5 rounded-full">
+                        {{ cat.name }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4" v-if="authStore.hasRole(['Admin', 'Warehouse'])">
+                      <div class="d-flex align-center">
+                        <v-btn icon size="x-small" color="primary" variant="text" class="me-2 hover:bg-slate-100" @click="openEditCategoryDialog(child)">
+                          <v-icon>mdi-pencil-outline</v-icon>
+                        </v-btn>
+                        <v-btn v-if="authStore.hasRole('Admin')" icon size="x-small" color="error" variant="text" class="hover:bg-slate-100" @click="handleDeleteCategory(child.id)">
+                          <v-icon>mdi-trash-can-outline</v-icon>
+                        </v-btn>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
               </tbody>
             </table>
           </div>
@@ -275,17 +332,30 @@
                   </td>
                   <td class="px-6 py-4 text-sm text-slate-500">{{ formatDate(receipt.createdAt) }}</td>
                   <td class="px-6 py-4" v-if="authStore.hasRole('Admin')">
-                    <v-btn
-                      v-if="receipt.status !== 'Confirmed'"
-                      size="x-small"
-                      color="success"
-                      variant="flat"
-                      class="rounded-lg shadow-sm text-white hover:scale-105 active:scale-95 transition-all px-3 py-1 font-weight-bold"
-                      @click="handleConfirmReceipt(receipt.id)"
-                    >
-                      Duyệt
-                    </v-btn>
-                    <span v-else class="text-slate-400 text-sm">-</span>
+                    <div class="d-flex align-center gap-2">
+                      <v-btn
+                        v-if="receipt.status !== 'Confirmed'"
+                        size="x-small" color="success" variant="flat" class="rounded-lg shadow-sm text-white font-weight-bold me-2"
+                        @click="handleConfirmReceipt(receipt.id)"
+                      >
+                        Duyệt
+                      </v-btn>
+                      <v-btn
+                        v-if="receipt.status !== 'Confirmed'"
+                        icon size="x-small" color="primary" variant="text" class="hover:bg-slate-100 me-1"
+                        @click="openEditReceiptDialog(receipt)"
+                      >
+                        <v-icon>mdi-pencil-outline</v-icon>
+                      </v-btn>
+                      <v-btn
+                        v-if="receipt.status !== 'Confirmed'"
+                        icon size="x-small" color="error" variant="text" class="hover:bg-slate-100"
+                        @click="handleDeleteReceipt(receipt.id)"
+                      >
+                        <v-icon>mdi-trash-can-outline</v-icon>
+                      </v-btn>
+                      <span v-if="receipt.status === 'Confirmed'" class="text-slate-400 text-sm">-</span>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -382,6 +452,22 @@
                   color="primary"
                   :rules="[v => !!v || 'Danh mục là bắt buộc']"
                 ></v-select>
+              </v-col>
+              <v-col cols="12" sm="6">
+                <v-file-input
+                  v-model="imageFile"
+                  label="Hình ảnh sản phẩm (Tùy chọn)"
+                  accept="image/*"
+                  variant="outlined"
+                  density="compact"
+                  color="primary"
+                  prepend-icon="mdi-camera"
+                  show-size
+                ></v-file-input>
+              </v-col>
+              <v-col cols="12" sm="12" v-if="editingProduct.imageUrl">
+                <div class="mb-2 text-sm text-slate-500">Ảnh hiện tại:</div>
+                <v-img :src="getImageUrl(editingProduct.imageUrl)" max-height="100" max-width="100" class="rounded border bg-slate-50"></v-img>
               </v-col>
               <v-col cols="12" sm="6">
                 <v-text-field
@@ -580,6 +666,131 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog v-model="detailsDialog" max-width="900" persistent>
+      <v-card class="rounded-xl shadow-xl border border-slate-100">
+        <v-card-title class="px-6 py-4 border-b border-slate-100 bg-slate-50 d-flex justify-space-between align-center">
+          <span class="text-h6 font-bold text-slate-800">Chi tiết sản phẩm</span>
+          <v-btn icon="mdi-close" variant="text" size="small" @click="detailsDialog = false"></v-btn>
+        </v-card-title>
+        <v-card-text class="px-6 py-4 p-0">
+          <v-tabs v-model="detailsTab" color="primary" class="border-b border-slate-200">
+            <v-tab value="overview"><v-icon start>mdi-information-outline</v-icon> Tổng quan</v-tab>
+            <v-tab value="price"><v-icon start>mdi-currency-usd</v-icon> Lịch sử giá</v-tab>
+            <v-tab value="stock"><v-icon start>mdi-package-variant-closed</v-icon> Thẻ kho</v-tab>
+          </v-tabs>
+          <v-window v-model="detailsTab" class="mt-4">
+            <v-window-item value="overview">
+              <div v-if="detailsLoading" class="p-8 flex justify-center items-center">
+                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+              </div>
+              <div v-else-if="detailsProduct" class="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
+                <div class="col-span-1">
+                  <v-img v-if="detailsProduct.imageUrl" :src="getImageUrl(detailsProduct.imageUrl)" class="rounded-lg shadow-sm border border-slate-200 w-full object-cover" aspect-ratio="1"></v-img>
+                  <div v-else class="rounded-lg bg-slate-100 border border-slate-200 w-full aspect-square d-flex justify-center align-center text-slate-400">
+                    <v-icon size="64">mdi-image-outline</v-icon>
+                  </div>
+                </div>
+                <div class="col-span-2 space-y-4">
+                  <div>
+                    <div class="text-sm text-slate-500 font-medium">Mã sản phẩm</div>
+                    <div class="text-lg font-mono font-bold text-blue-700">{{ detailsProduct.code }}</div>
+                  </div>
+                  <div>
+                    <div class="text-sm text-slate-500 font-medium">Tên sản phẩm</div>
+                    <div class="text-xl font-bold text-slate-900">{{ detailsProduct.name }}</div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                      <div class="text-xs text-slate-500 font-medium mb-1">Giá nhập</div>
+                      <div class="font-semibold text-slate-800">{{ formatPrice(detailsProduct.importPrice) }}</div>
+                    </div>
+                    <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                      <div class="text-xs text-emerald-600 font-medium mb-1">Giá bán</div>
+                      <div class="font-bold text-emerald-700">{{ formatPrice(detailsProduct.salePrice) }}</div>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="text-sm text-slate-500 font-medium">Danh mục</div>
+                    <div class="text-md text-slate-800">{{ detailsProduct.categoryName || 'Chưa phân loại' }}</div>
+                  </div>
+                  <div>
+                    <div class="text-sm text-slate-500 font-medium mb-1">Mô tả</div>
+                    <p class="text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100 text-sm whitespace-pre-wrap">{{ detailsProduct.description || 'Không có mô tả.' }}</p>
+                  </div>
+                </div>
+              </div>
+            </v-window-item>
+            <v-window-item value="price">
+              <div v-if="detailsProduct" class="p-4">
+                <table class="w-full text-left border-collapse text-slate-700 text-sm">
+                  <thead>
+                    <tr>
+                      <th class="px-4 py-3 font-semibold bg-slate-50 border-b border-slate-200">Thời gian áp dụng</th>
+                      <th class="px-4 py-3 font-semibold bg-slate-50 border-b border-slate-200">Giá nhập</th>
+                      <th class="px-4 py-3 font-semibold bg-slate-50 border-b border-slate-200">Giá bán</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="ph in detailsProduct.priceHistories" :key="ph.id" class="border-b border-slate-100 hover:bg-slate-50">
+                      <td class="px-4 py-3">{{ new Date(ph.effectiveDate).toLocaleString('vi-VN') }}</td>
+                      <td class="px-4 py-3">{{ formatPrice(ph.importPrice) }}</td>
+                      <td class="px-4 py-3 font-medium text-emerald-600">{{ formatPrice(ph.salePrice) }}</td>
+                    </tr>
+                    <tr v-if="!detailsProduct.priceHistories?.length">
+                      <td colspan="3" class="px-4 py-6 text-center text-slate-400">Không có dữ liệu lịch sử giá.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </v-window-item>
+            <v-window-item value="stock">
+              <div v-if="detailsProduct" class="p-4">
+                <div class="mb-4 flex gap-4">
+                  <div class="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg border border-blue-100">
+                    Tồn kho hiện tại: <span class="font-bold text-lg">{{ detailsProduct.quantityInStock }}</span>
+                  </div>
+                  <div class="bg-amber-50 text-amber-700 px-4 py-2 rounded-lg border border-amber-100">
+                    Ngưỡng cảnh báo: <span class="font-bold">{{ detailsProduct.minStockThreshold }}</span>
+                  </div>
+                </div>
+                <table class="w-full text-left border-collapse text-slate-700 text-sm">
+                  <thead>
+                    <tr>
+                      <th class="px-4 py-3 font-semibold bg-slate-50 border-b border-slate-200">Thời gian</th>
+                      <th class="px-4 py-3 font-semibold bg-slate-50 border-b border-slate-200">Loại/Lý do</th>
+                      <th class="px-4 py-3 font-semibold bg-slate-50 border-b border-slate-200 text-right">Biến động</th>
+                      <th class="px-4 py-3 font-semibold bg-slate-50 border-b border-slate-200">Tham chiếu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="sm in detailsProduct.stockMoves" :key="sm.id" class="border-b border-slate-100 hover:bg-slate-50">
+                      <td class="px-4 py-3">{{ new Date(sm.createdAt).toLocaleString('vi-VN') }}</td>
+                      <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded text-xs font-medium" :class="sm.quantity > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'">
+                          {{ sm.moveType }}
+                        </span>
+                      </td>
+                      <td class="px-4 py-3 text-right font-mono font-bold" :class="sm.quantity > 0 ? 'text-emerald-600' : 'text-rose-600'">
+                        {{ sm.quantity > 0 ? '+' : '' }}{{ sm.quantity }}
+                      </td>
+                      <td class="px-4 py-3 text-slate-500 font-mono text-xs">{{ sm.referenceDocument || '-' }}</td>
+                    </tr>
+                    <tr v-if="!detailsProduct.stockMoves?.length">
+                      <td colspan="4" class="px-4 py-6 text-center text-slate-400">Không có dữ liệu thẻ kho.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </v-window-item>
+          </v-window>
+        </v-card-text>
+        <v-card-actions class="px-6 py-4 border-t border-slate-100 bg-slate-50">
+          <v-spacer></v-spacer>
+          <v-btn color="slate-600" variant="text" class="text-none px-4" @click="detailsDialog = false">Đóng</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000">
       {{ snackbarText }}
     </v-snackbar>
@@ -587,9 +798,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useProductStore } from '../../stores/product';
 import { useAuthStore } from '../../stores/auth';
+import api from '../../config/api';
 
 const productStore = useProductStore();
 const authStore = useAuthStore();
@@ -609,6 +821,39 @@ const dialogTitle = computed(() => isEditMode.value ? 'Cập nhật sản phẩm
 const formValid = ref(false);
 const saveLoading = ref(false);
 
+const detailsDialog = ref(false);
+const detailsTab = ref('overview');
+const detailsProduct = ref(null);
+const detailsLoading = ref(false);
+
+// Category expand/collapse state
+const expandedCategories = ref({});
+const toggleCategoryExpand = (categoryId) => {
+  expandedCategories.value[categoryId] = !expandedCategories.value[categoryId];
+};
+
+const openDetailsDialog = async (id) => {
+  try {
+    detailsProduct.value = null; // Clear previous
+    detailsLoading.value = true;
+    detailsDialog.value = true;
+    detailsTab.value = 'overview';
+    const res = await api.get(`/api/products/${id}`);
+    detailsProduct.value = res.data;
+    detailsLoading.value = false;
+  } catch (error) {
+    detailsLoading.value = false;
+    showNotify('Lỗi tải chi tiết sản phẩm', 'error');
+  }
+};
+
+const imageFile = ref(null);
+const getImageUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return `http://localhost:5000${url}`;
+};
+
 const editingProduct = ref({
   id: null,
   code: '',
@@ -626,6 +871,8 @@ const editingProduct = ref({
 const showReceiptDialog = ref(false);
 const receiptFormValid = ref(false);
 const receiptSaveLoading = ref(false);
+const isEditReceipt = ref(false);
+const editingReceiptId = ref(null);
 const newReceipt = ref({
   supplierName: '',
   note: '',
@@ -686,6 +933,11 @@ const flatCategoriesList = computed(() => {
   return result;
 });
 
+// Parent categories only (for table display with expandable children)
+const parentCategoriesList = computed(() => {
+  return productStore.categories || [];
+});
+
 onMounted(() => {
   productStore.fetchProducts();
   productStore.fetchCategories();
@@ -715,8 +967,10 @@ const openCreateDialog = () => {
     categoryId: flatCategories.value[0]?.id || null,
     minStockThreshold: 10,
     initialStock: 0,
-    isActive: true
+    isActive: true,
+    imageUrl: ''
   };
+  imageFile.value = null;
   showDialog.value = true;
 };
 
@@ -731,14 +985,34 @@ const openEditDialog = (product) => {
     salePrice: product.salePrice,
     categoryId: product.categoryId,
     minStockThreshold: product.minStockThreshold,
-    isActive: product.isActive
+    isActive: product.isActive,
+    imageUrl: product.imageUrl
   };
+  imageFile.value = null;
   showDialog.value = true;
 };
 
 const saveProduct = async () => {
   if (!formValid.value) return;
   saveLoading.value = true;
+  
+  // Handle image upload if a file is selected
+  let uploadedImageUrl = editingProduct.value.imageUrl;
+  if (imageFile.value && imageFile.value.length > 0) {
+    try {
+      const formData = new FormData();
+      formData.append('file', imageFile.value[0]);
+      const uploadRes = await api.post('/api/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      uploadedImageUrl = uploadRes.data.url;
+    } catch (err) {
+      showNotify('Lỗi tải ảnh lên: ' + (err.response?.data?.message || err.message), 'error');
+      saveLoading.value = false;
+      return;
+    }
+  }
+
   let res;
   if (isEditMode.value) {
     res = await productStore.updateProduct(editingProduct.value.id, {
@@ -748,6 +1022,7 @@ const saveProduct = async () => {
       salePrice: editingProduct.value.salePrice,
       categoryId: editingProduct.value.categoryId,
       minStockThreshold: editingProduct.value.minStockThreshold,
+      imageUrl: uploadedImageUrl,
       isActive: editingProduct.value.isActive
     });
   } else {
@@ -759,6 +1034,7 @@ const saveProduct = async () => {
       salePrice: editingProduct.value.salePrice,
       categoryId: editingProduct.value.categoryId,
       minStockThreshold: editingProduct.value.minStockThreshold,
+      imageUrl: uploadedImageUrl,
       initialStock: editingProduct.value.initialStock
     });
   }
@@ -771,33 +1047,46 @@ const saveProduct = async () => {
   }
 };
 
-const toggleProductStatus = async (id, currentStatus) => {
-  if (currentStatus) {
-    await handleDelete(id);
-  } else {
-    // If backend doesn't support restore, we use update to active
-    const res = await productStore.updateProduct(id, { isActive: true });
+const handleDelete = async (id) => {
+  if (confirm('Bạn có chắc chắn muốn ngừng bán sản phẩm này? (Soft Delete)')) {
+    const res = await productStore.deleteProduct(id);
     if (res.success) {
-      showNotify('Khôi phục sản phẩm thành công!');
+      showNotify('Đã chuyển sản phẩm sang trạng thái Ngừng bán!');
     } else {
       showNotify(res.message, 'error');
     }
   }
 };
 
-const handleDelete = async (id) => {
-  if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này không?')) {
-    const res = await productStore.deleteProduct(id);
+const handleRestoreProduct = async (id) => {
+  if (confirm('Bạn muốn khôi phục sản phẩm này sang trạng thái Đang bán?')) {
+    const res = await productStore.restoreProduct(id);
     if (res.success) {
-      showNotify('Xóa sản phẩm thành công!');
+      showNotify('Đã khôi phục sản phẩm thành công!');
     } else {
       showNotify(res.message, 'error');
+    }
+  }
+};
+
+// Toggle product status (active/inactive)
+const toggleProductStatus = async (id, currentStatus) => {
+  const action = currentStatus ? 'ngừng bán' : 'khôi phục';
+  const message = currentStatus ? 'Bạn có chắc muốn ngừng bán sản phẩm này?' : 'Bạn muốn khôi phục sản phẩm này?';
+  
+  if (confirm(message)) {
+    if (currentStatus) {
+      await handleDelete(id);
+    } else {
+      await handleRestoreProduct(id);
     }
   }
 };
 
 // Stock receipt handlers
 const openReceiptDialog = () => {
+  isEditReceipt.value = false;
+  editingReceiptId.value = null;
   newReceipt.value = {
     supplierName: '',
     note: '',
@@ -806,6 +1095,26 @@ const openReceiptDialog = () => {
     ]
   };
   showReceiptDialog.value = true;
+};
+
+const openEditReceiptDialog = async (receipt) => {
+  try {
+    const res = await productStore.fetchReceiptDetail(receipt.id);
+    if (res.success && res.data) {
+      isEditReceipt.value = true;
+      editingReceiptId.value = receipt.id;
+      newReceipt.value = {
+        supplierName: res.data.supplierName || '',
+        note: res.data.note || '',
+        items: res.data.items?.length ? res.data.items.map(i => ({ productId: i.productId, quantity: i.quantity, importPrice: i.importPrice })) : [{ productId: productStore.products[0]?.id || null, quantity: 1, importPrice: 0 }]
+      };
+      showReceiptDialog.value = true;
+    } else {
+      showNotify(res.message || 'Lỗi tải phiếu nhập', 'error');
+    }
+  } catch (e) {
+    showNotify('Lỗi tải chi tiết phiếu nhập', 'error');
+  }
 };
 
 const addReceiptItem = () => {
@@ -823,14 +1132,30 @@ const removeReceiptItem = (index) => {
 const saveReceipt = async () => {
   if (!receiptFormValid.value) return;
   receiptSaveLoading.value = true;
-  const res = await productStore.createReceipt(newReceipt.value);
+  let res;
+  if (isEditReceipt.value) {
+    res = await productStore.updateReceipt(editingReceiptId.value, newReceipt.value);
+  } else {
+    res = await productStore.createReceipt(newReceipt.value);
+  }
   receiptSaveLoading.value = false;
   if (res.success) {
     showReceiptDialog.value = false;
-    showNotify('Tạo phiếu nhập kho thành công!');
+    showNotify(isEditReceipt.value ? 'Cập nhật phiếu nhập thành công!' : 'Tạo phiếu nhập kho thành công!');
     productStore.fetchProducts(); // Refresh stock quantities
   } else {
-    showNotify(res.message, 'error');
+    showNotify(res.message || 'Có lỗi xảy ra', 'error');
+  }
+};
+
+const handleDeleteReceipt = async (id) => {
+  if (confirm('Bạn có chắc chắn muốn xóa phiếu nhập nháp này?')) {
+    const res = await productStore.deleteReceipt(id);
+    if (res.success) {
+      showNotify('Đã xóa phiếu nhập kho thành công!');
+    } else {
+      showNotify(res.message || 'Xóa thất bại', 'error');
+    }
   }
 };
 
