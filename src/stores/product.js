@@ -283,6 +283,19 @@ export const useProductStore = defineStore('product', () => {
     }
   };
 
+  /**
+   * Decreases stock when an order is placed (called by Team 4 after order creation).
+   * Endpoint: POST /api/products/{id}/decrease-stock  body: { quantity }
+   */
+  const decreaseStock = async (productId, quantity) => {
+    try {
+      await api.post(`/api/products/${productId}/decrease-stock`, { quantity });
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: err.response?.data?.message || 'Cập nhật tồn kho thất bại' };
+    }
+  };
+
   return {
     // Products
     products,
@@ -322,5 +335,6 @@ export const useProductStore = defineStore('product', () => {
     fetchReceiptDetail,
     updateReceipt,
     deleteReceipt,
+    decreaseStock,
   };
 });

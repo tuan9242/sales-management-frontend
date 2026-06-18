@@ -1,0 +1,36 @@
+services:
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: order-sqlserver
+    environment:
+      SA_PASSWORD: "OrderSales@2026"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1434:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "OrderSales@2026", "-Q", "SELECT 1", "-C"]
+      interval: 10s
+      retries: 10
+      start_period: 30s
+
+  backend:
+    image: chizrus/order-sales-backend:latest
+    container_name: order-backend
+    ports:
+      - "5198:5198"
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=OrderSalesServiceDB;User Id=sa;Password=OrderSales@2026;TrustServerCertificate=True;MultipleActiveResultSets=true"
+      Jwt__Secret: "OrderSales@2026_JWT_Secret_Key_For_Nhom4"
+      Jwt__Issuer: "OrderSalesService"
+      Jwt__Audience: "OrderSalesService"
+      ASPNETCORE_ENVIRONMENT: "Production"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+
+volumes:
+  sqlserver_data:

@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sales-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong@Passw0rd
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    networks:
+      - sales-network
+
+  # Tải trực tiếp Image Product Service từ tài khoản salesmanagement trên Docker Hub
+  product-service:
+    image: salesmanagement/sales-product-service:v1
+    container_name: sales-product-service
+    ports:
+      - "5002:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__ProductDB=Server=sales-sqlserver;Database=ProductDB;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
+      - JwtSettings__Secret=Th1sIsA_SuperS3cr3t_K3y_F0r_JWT_Authenticat10n!
+      - JwtSettings__Issuer=SalesManagement
+      - JwtSettings__Audience=SalesManagementAPI
+    depends_on:
+      - sqlserver
+    networks:
+      - sales-network
+
+  # Tải trực tiếp Image API Gateway từ tài khoản salesmanagement trên Docker Hub
+  api-gateway:
+    image: salesmanagement/sales-gateway:v1
+    container_name: sales-gateway
+    ports:
+      - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - JWT_SECRET=Th1sIsA_SuperS3cr3t_K3y_F0r_JWT_Authenticat10n!
+      - JWT_ISSUER=SalesManagement
+      - JWT_AUDIENCE=SalesManagementAPI
+    depends_on:
+      - product-service
+    networks:
+      - sales-network
+
+volumes:
+  sqlserver-data:
+
+networks:
+  sales-network:
+    driver: bridge
