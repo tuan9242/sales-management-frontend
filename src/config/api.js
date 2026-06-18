@@ -1,7 +1,20 @@
 import axios from 'axios';
 
-// URL của Ocelot API Gateway (đọc từ biến môi trường hoặc fallback về localhost:5000)
-const GATEWAY_URL = process.env.VUE_APP_API_GATEWAY_URL || 'http://localhost:5000';
+// URL của Ocelot API Gateway (đọc động theo thứ tự: config.js -> env -> tự động dò tìm IP hiện tại + port 5000)
+const getGatewayUrl = () => {
+  if (window.VUE_APP_API_GATEWAY_URL) {
+    return window.VUE_APP_API_GATEWAY_URL;
+  }
+  if (process.env.VUE_APP_API_GATEWAY_URL) {
+    return process.env.VUE_APP_API_GATEWAY_URL;
+  }
+  // Tự động dò tìm địa chỉ host truy cập hiện tại
+  const protocol = window.location.protocol;
+  const hostname = window.location.hostname;
+  return `${protocol}//${hostname}:5000`;
+};
+
+const GATEWAY_URL = getGatewayUrl();
 
 const api = axios.create({
   baseURL: GATEWAY_URL,

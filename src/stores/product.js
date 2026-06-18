@@ -9,6 +9,7 @@ import api from '../config/api';
 export const useProductStore = defineStore('product', () => {
   // ── Products State ──
   const products = ref([]);
+  const allProducts = ref([]); // Chứa toàn bộ sản phẩm không phân trang phục vụ lập phiếu nhập
   const totalProducts = ref(0);
   const currentPage = ref(1);
   const pageSize = ref(20);
@@ -60,6 +61,19 @@ export const useProductStore = defineStore('product', () => {
       products.value = [];
     } finally {
       loading.value = false;
+    }
+  };
+
+  /**
+   * Tải toàn bộ sản phẩm (không phân trang) để điền vào dropdowns
+   */
+  const fetchAllProducts = async () => {
+    try {
+      const response = await api.get('/api/products', { params: { page: 1, pageSize: 1000, isActive: true } });
+      allProducts.value = response.data.data || [];
+    } catch (err) {
+      console.error('Không thể tải toàn bộ sản phẩm', err);
+      allProducts.value = [];
     }
   };
 
@@ -272,6 +286,7 @@ export const useProductStore = defineStore('product', () => {
   return {
     // Products
     products,
+    allProducts,
     totalProducts,
     currentPage,
     pageSize,
@@ -279,6 +294,7 @@ export const useProductStore = defineStore('product', () => {
     loading,
     error,
     fetchProducts,
+    fetchAllProducts,
     createProduct,
     updateProduct,
     deleteProduct,

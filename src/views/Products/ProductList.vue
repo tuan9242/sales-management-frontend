@@ -144,7 +144,10 @@
             </table>
           </div>
           
-          <div class="mt-4 d-flex justify-center" v-if="productStore.totalPages > 1">
+          <div class="mt-4 d-flex flex-column align-center gap-2" v-if="productStore.totalPages > 1">
+            <div class="text-sm text-slate-500 font-medium">
+              Hiển thị {{ (productStore.currentPage - 1) * productStore.pageSize + 1 }} - {{ Math.min(productStore.currentPage * productStore.pageSize, productStore.totalProducts) }} trên tổng số {{ productStore.totalProducts }} sản phẩm (Trang {{ productStore.currentPage }} / {{ productStore.totalPages }})
+            </div>
             <v-pagination
               v-model="productStore.currentPage"
               :length="productStore.totalPages"
@@ -379,7 +382,10 @@
             </table>
           </div>
 
-          <div class="mt-4 d-flex justify-center" v-if="productStore.receiptsTotalPages > 1">
+          <div class="mt-4 d-flex flex-column align-center gap-2" v-if="productStore.receiptsTotalPages > 1">
+            <div class="text-sm text-slate-500 font-medium">
+              Hiển thị {{ (productStore.receiptsCurrentPage - 1) * productStore.pageSize + 1 }} - {{ Math.min(productStore.receiptsCurrentPage * productStore.pageSize, productStore.receiptsTotal) }} trên tổng số {{ productStore.receiptsTotal }} phiếu nhập (Trang {{ productStore.receiptsCurrentPage }} / {{ productStore.receiptsTotalPages }})
+            </div>
             <v-pagination
               v-model="productStore.receiptsCurrentPage"
               :length="productStore.receiptsTotalPages"
@@ -443,7 +449,10 @@
                   variant="outlined"
                   density="compact"
                   color="primary"
-                  :rules="[v => v >= 0 || 'Giá nhập không được âm']"
+                  :rules="[
+                    v => v !== null && v !== '' || 'Giá nhập là bắt buộc',
+                    v => v >= 0 || 'Giá nhập không được âm'
+                  ]"
                 ></v-text-field>
               </v-col>
               <v-col cols="12" sm="6">
@@ -454,7 +463,10 @@
                   variant="outlined"
                   density="compact"
                   color="primary"
-                  :rules="[v => v >= 0 || 'Giá bán không được âm']"
+                  :rules="[
+                    v => v !== null && v !== '' || 'Giá bán là bắt buộc',
+                    v => v >= 0 || 'Giá bán không được âm'
+                  ]"
                 ></v-text-field>
               </v-col>
               <v-col cols="12" sm="6">
@@ -530,7 +542,7 @@
     <v-dialog v-model="showReceiptDialog" max-width="800px" persistent>
       <v-card class="glass-card text-slate-850" rounded="xl">
         <v-card-title class="d-flex justify-space-between align-center px-6 py-4 border-bottom">
-          <span class="text-h5 font-weight-black">Tạo Phiếu Nhập Kho Mới</span>
+          <span class="text-h5 font-weight-black">{{ receiptDialogTitle }}</span>
           <v-btn icon variant="text" @click="showReceiptDialog = false">
             <v-icon>mdi-close</v-icon>
           </v-btn>
@@ -546,6 +558,7 @@
                   density="compact"
                   color="primary"
                   :rules="[v => !!v || 'Nhà cung cấp là bắt buộc']"
+                  :disabled="isReceiptReadOnly"
                 ></v-text-field>
               </v-col>
               <v-col cols="12" sm="6">
@@ -555,20 +568,21 @@
                   variant="outlined"
                   density="compact"
                   color="primary"
+                  :disabled="isReceiptReadOnly"
                 ></v-text-field>
               </v-col>
             </v-row>
 
             <div class="d-flex justify-space-between align-center my-4">
               <span class="text-subtitle-1 font-weight-bold">Danh sách mặt hàng nhập</span>
-              <v-btn color="secondary" size="small" prepend-icon="mdi-plus" @click="addReceiptItem">Thêm dòng</v-btn>
+              <v-btn v-if="!isReceiptReadOnly" color="secondary" size="small" prepend-icon="mdi-plus" @click="addReceiptItem">Thêm dòng</v-btn>
             </div>
 
             <v-row v-for="(item, index) in newReceipt.items" :key="index" class="align-center">
               <v-col cols="12" sm="5">
                 <v-select
                   v-model="item.productId"
-                  :items="productStore.products"
+                  :items="productStore.allProducts"
                   item-title="name"
                   item-value="id"
                   label="Chọn sản phẩm *"
@@ -576,6 +590,8 @@
                   density="compact"
                   color="primary"
                   :rules="[v => !!v || 'Sản phẩm là bắt buộc']"
+                  :disabled="isReceiptReadOnly"
+                  @update:modelValue="() => onProductSelected(item)"
                 ></v-select>
               </v-col>
               <v-col cols="12" sm="3">
@@ -587,6 +603,7 @@
                   density="compact"
                   color="primary"
                   :rules="[v => v > 0 || 'Số lượng > 0']"
+                  :disabled="isReceiptReadOnly"
                 ></v-text-field>
               </v-col>
               <v-col cols="12" sm="3">
@@ -598,10 +615,11 @@
                   density="compact"
                   color="primary"
                   :rules="[v => v >= 0 || 'Giá không âm']"
+                  :disabled="isReceiptReadOnly"
                 ></v-text-field>
               </v-col>
               <v-col cols="12" sm="1" class="text-center">
-                <v-btn icon color="error" variant="text" size="small" @click="removeReceiptItem(index)" :disabled="newReceipt.items.length === 1">
+                <v-btn icon color="error" variant="text" size="small" @click="removeReceiptItem(index)" :disabled="isReceiptReadOnly || newReceipt.items.length === 1">
                   <v-icon>mdi-delete</v-icon>
                 </v-btn>
               </v-col>
@@ -610,8 +628,9 @@
         </v-card-text>
         <v-card-actions class="px-6 pb-6 pt-0">
           <v-spacer></v-spacer>
-          <v-btn variant="outlined" rounded="xl" color="slate-500" class="px-5 font-weight-bold border-slate-300" @click="showReceiptDialog = false">Hủy</v-btn>
-          <v-btn variant="elevated" rounded="xl" color="primary" class="px-5 font-weight-bold text-white shadow-md shadow-primary/20" :disabled="!receiptFormValid" :loading="receiptSaveLoading" @click="saveReceipt">Lưu phiếu</v-btn>
+          <v-btn v-if="!isReceiptReadOnly" variant="outlined" rounded="xl" color="slate-500" class="px-5 font-weight-bold border-slate-300" @click="showReceiptDialog = false">Hủy</v-btn>
+          <v-btn v-if="!isReceiptReadOnly" variant="elevated" rounded="xl" color="primary" class="px-5 font-weight-bold text-white shadow-md shadow-primary/20" :disabled="!receiptFormValid" :loading="receiptSaveLoading" @click="saveReceipt">Lưu phiếu</v-btn>
+          <v-btn v-else variant="outlined" rounded="xl" color="primary" class="px-5 font-weight-bold" @click="showReceiptDialog = false">Đóng</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -826,9 +845,17 @@ const authStore = useAuthStore();
 const tab = ref('products');
 const searchProduct = ref('');
 
-// Watch search and reload products
+// Watch search and reload products with debounce
+let searchTimeout = null;
 watch(searchProduct, (newVal) => {
-  productStore.fetchProducts(1, newVal);
+  if (searchTimeout) clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    productStore.fetchProducts(1, newVal);
+  }, 300);
+});
+
+onUnmounted(() => {
+  if (searchTimeout) clearTimeout(searchTimeout);
 });
 
 // Dialog states
@@ -871,8 +898,7 @@ const imageFile = ref(null);
 const getImageUrl = (url) => {
   if (!url) return '';
   if (url.startsWith('http')) return url;
-  // Dùng GATEWAY_URL từ env thay vì hardcode localhost
-  const gateway = process.env.VUE_APP_API_GATEWAY_URL || 'http://localhost:5000';
+  const gateway = window.VUE_APP_API_GATEWAY_URL || process.env.VUE_APP_API_GATEWAY_URL || `${window.location.protocol}//${window.location.hostname}:5000`;
   return `${gateway}${url}`;
 };
 
@@ -902,6 +928,27 @@ const newReceipt = ref({
     { productId: null, quantity: 1, importPrice: 0 }
   ]
 });
+
+// Trạng thái khóa biểu mẫu khi phiếu đã duyệt
+const isReceiptReadOnly = computed(() => {
+  if (!isEditReceipt.value || !editingReceiptId.value) return false;
+  const currentReceipt = productStore.receipts.find(r => r.id === editingReceiptId.value);
+  return currentReceipt?.status === 'Confirmed';
+});
+
+const receiptDialogTitle = computed(() => {
+  if (isReceiptReadOnly.value) return 'Chi Tiết Phiếu Nhập Kho (Đã Duyệt)';
+  return isEditReceipt.value ? 'Cập Nhật Phiếu Nhập Kho (Bản Nháp)' : 'Tạo Phiếu Nhập Kho Mới';
+});
+
+// Tự động điền giá nhập khi chọn sản phẩm
+const onProductSelected = (item) => {
+  const selectedProd = productStore.allProducts.find(p => p.id === item.productId);
+  if (selectedProd) {
+    item.importPrice = selectedProd.importPrice;
+  }
+};
+
 
 // Snackbar notification state
 const snackbar = ref(false);
@@ -961,8 +1008,9 @@ const parentCategoriesList = computed(() => {
 });
 
 // Flatten children N levels - dùng cho template render danh mục con đệ quy
-const flattenChildren = (nodes, parentName, depth = 1) => {
+const flattenChildren = (nodes = [], parentName, depth = 1) => {
   const result = [];
+  if (!nodes) return result;
   for (const node of nodes) {
     result.push({
       ...node,
@@ -978,6 +1026,7 @@ const flattenChildren = (nodes, parentName, depth = 1) => {
 };
 
 onMounted(() => {
+  productStore.fetchAllProducts(); // Tải toàn bộ sản phẩm cho các select dropdowns
   productStore.fetchProducts();
   productStore.fetchCategories();
   productStore.fetchReceipts();
@@ -1037,10 +1086,17 @@ const saveProduct = async () => {
   
   // Handle image upload if a file is selected
   let uploadedImageUrl = editingProduct.value.imageUrl;
-  if (imageFile.value && imageFile.value.length > 0) {
+  let fileToUpload = null;
+  if (Array.isArray(imageFile.value) && imageFile.value.length > 0) {
+    fileToUpload = imageFile.value[0];
+  } else if (imageFile.value && (imageFile.value instanceof File || typeof imageFile.value === 'object')) {
+    fileToUpload = imageFile.value;
+  }
+
+  if (fileToUpload) {
     try {
       const formData = new FormData();
-      formData.append('file', imageFile.value[0]);
+      formData.append('file', fileToUpload);
       const uploadRes = await api.post('/api/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
@@ -1118,11 +1174,12 @@ const toggleProductStatus = async (id, currentStatus) => {
 const openReceiptDialog = () => {
   isEditReceipt.value = false;
   editingReceiptId.value = null;
+  const defaultProd = productStore.allProducts[0];
   newReceipt.value = {
     supplierName: '',
     note: '',
     items: [
-      { productId: productStore.products[0]?.id || null, quantity: 1, importPrice: 0 }
+      { productId: defaultProd?.id || null, quantity: 1, importPrice: defaultProd?.importPrice || 0 }
     ]
   };
   showReceiptDialog.value = true;
@@ -1134,10 +1191,13 @@ const openEditReceiptDialog = async (receipt) => {
     if (res.success && res.data) {
       isEditReceipt.value = true;
       editingReceiptId.value = receipt.id;
+      const defaultProd = productStore.allProducts[0];
       newReceipt.value = {
         supplierName: res.data.supplierName || '',
         note: res.data.note || '',
-        items: res.data.items?.length ? res.data.items.map(i => ({ productId: i.productId, quantity: i.quantity, importPrice: i.importPrice })) : [{ productId: productStore.products[0]?.id || null, quantity: 1, importPrice: 0 }]
+        items: res.data.items?.length 
+          ? res.data.items.map(i => ({ productId: i.productId, quantity: i.quantity, importPrice: i.importPrice })) 
+          : [{ productId: defaultProd?.id || null, quantity: 1, importPrice: defaultProd?.importPrice || 0 }]
       };
       showReceiptDialog.value = true;
     } else {
@@ -1149,10 +1209,11 @@ const openEditReceiptDialog = async (receipt) => {
 };
 
 const addReceiptItem = () => {
+  const defaultProd = productStore.allProducts[0];
   newReceipt.value.items.push({
-    productId: productStore.products[0]?.id || null,
+    productId: defaultProd?.id || null,
     quantity: 1,
-    importPrice: 0
+    importPrice: defaultProd?.importPrice || 0
   });
 };
 
@@ -1244,10 +1305,38 @@ const openEditCategoryDialog = (cat) => {
   showCategoryDialog.value = true;
 };
 
+// Đệ quy lấy danh sách ID của tất cả các danh mục con cháu
+const getDescendantIds = (categoryId, nodes) => {
+  const ids = [];
+  const findNode = (nodesList) => {
+    for (const node of nodesList) {
+      if (node.id === categoryId) {
+        const collectIds = (n) => {
+          if (n.children && n.children.length > 0) {
+            for (const child of n.children) {
+              ids.push(child.id);
+              collectIds(child);
+            }
+          }
+        };
+        collectIds(node);
+        return true;
+      }
+      if (node.children && node.children.length > 0) {
+        if (findNode(node.children)) return true;
+      }
+    }
+    return false;
+  };
+  findNode(nodes);
+  return ids;
+};
+
 const availableParentCategories = computed(() => {
   const list = flatCategories.value.map(c => ({ id: c.id, name: c.name }));
   if (isCategoryEditMode.value && editingCategory.value.id) {
-    return list.filter(c => c.id !== editingCategory.value.id);
+    const descendantIds = getDescendantIds(editingCategory.value.id, productStore.categories);
+    return list.filter(c => c.id !== editingCategory.value.id && !descendantIds.includes(c.id));
   }
   return list;
 });
