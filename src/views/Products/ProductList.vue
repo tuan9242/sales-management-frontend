@@ -83,8 +83,8 @@
                   </td>
                 </tr>
                 <tr v-else v-for="product in productStore.products" :key="product.id" class="hover:bg-slate-50/50 transition-colors duration-150">
-                  <td class="px-6 py-4">
-                    <span class="text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-1 rounded-md font-mono">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-1 rounded-md font-mono whitespace-nowrap">
                       {{ product.code }}
                     </span>
                   </td>
@@ -103,8 +103,8 @@
                       {{ product.quantityInStock }} / {{ product.minStockThreshold }}
                     </span>
                   </td>
-                  <td class="px-6 py-4">
-                    <span class="px-3 py-1 rounded-full text-xs font-bold"
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap"
                           :class="product.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'">
                       {{ product.isActive ? 'Đang bán' : 'Ngừng bán' }}
                     </span>
@@ -343,20 +343,22 @@
                   </td>
                 </tr>
                 <tr v-else v-for="receipt in productStore.receipts" :key="receipt.id" class="hover:bg-slate-50/50 transition-colors duration-150">
-                  <td class="px-6 py-4">
-                    <span class="font-mono font-bold text-blue-600">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="font-mono font-bold text-blue-600 whitespace-nowrap">
                       {{ receipt.receiptCode }}
                     </span>
                   </td>
                   <td class="px-6 py-4 font-semibold text-slate-900">{{ receipt.supplierName || 'Mặc định' }}</td>
-                  <td class="px-6 py-4 text-slate-700 font-medium">{{ formatPrice(receipt.totalAmount) }}</td>
-                  <td class="px-6 py-4 text-slate-500 text-sm">User ID: {{ receipt.createdBy }}</td>
-                  <td class="px-6 py-4">
-                    <span :class="receipt.status === 'Confirmed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'" class="inline-flex items-center text-xs font-bold px-2.5 py-0.5 rounded-full border">
+                  <td class="px-6 py-4 text-slate-700 font-medium whitespace-nowrap">{{ formatPrice(receipt.totalAmount) }}</td>
+                  <td class="px-6 py-4 text-slate-600 text-sm whitespace-nowrap">
+                    {{ getUserName(receipt.createdBy) }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span :class="receipt.status === 'Confirmed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'" class="inline-flex items-center text-xs font-bold px-2.5 py-0.5 rounded-full border whitespace-nowrap">
                       {{ receipt.status === 'Confirmed' ? 'Đã duyệt' : 'Bản nháp' }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 text-sm text-slate-500">{{ formatDate(receipt.createdAt) }}</td>
+                  <td class="px-6 py-4 text-sm text-slate-500 whitespace-nowrap">{{ formatDate(receipt.createdAt) }}</td>
                   <td class="px-6 py-4">
                     <div class="d-flex align-center gap-2">
                       <!-- Xem chi tiết phiếu nhập (luôn hiện) -->
@@ -367,25 +369,33 @@
                       >
                         <v-icon>mdi-eye-outline</v-icon>
                       </v-btn>
-                      <template v-if="authStore.hasRole('Admin') && receipt.status !== 'Confirmed'">
+                      <template v-if="receipt.status !== 'Confirmed'">
+                        <!-- Duyệt (Chỉ Admin) -->
                         <v-btn
+                          v-if="authStore.hasRole('Admin')"
                           size="x-small" color="success" variant="flat" class="rounded-lg shadow-sm text-white font-weight-bold me-2"
                           @click="handleConfirmReceipt(receipt.id)"
+                          title="Duyệt phiếu"
                         >
                           Duyệt
                         </v-btn>
-                        <v-btn
-                          icon size="x-small" color="primary" variant="text" class="hover:bg-slate-100 me-1"
-                          @click="openEditReceiptDialog(receipt)"
-                        >
-                          <v-icon>mdi-pencil-outline</v-icon>
-                        </v-btn>
-                        <v-btn
-                          icon size="x-small" color="error" variant="text" class="hover:bg-slate-100"
-                          @click="handleDeleteReceipt(receipt.id)"
-                        >
-                          <v-icon>mdi-trash-can-outline</v-icon>
-                        </v-btn>
+                        <!-- Sửa và Xóa (Admin hoặc Warehouse) -->
+                        <template v-if="authStore.hasRole(['Admin', 'Warehouse'])">
+                          <v-btn
+                            icon size="x-small" color="primary" variant="text" class="hover:bg-slate-100 me-1"
+                            @click="openEditReceiptDialog(receipt)"
+                            title="Sửa phiếu nháp"
+                          >
+                            <v-icon>mdi-pencil-outline</v-icon>
+                          </v-btn>
+                          <v-btn
+                            icon size="x-small" color="error" variant="text" class="hover:bg-slate-100"
+                            @click="handleDeleteReceipt(receipt.id)"
+                            title="Xóa phiếu nháp"
+                          >
+                            <v-icon>mdi-trash-can-outline</v-icon>
+                          </v-btn>
+                        </template>
                       </template>
                       <span v-if="receipt.status === 'Confirmed' && !authStore.hasRole('Admin')" class="text-slate-400 text-sm">Đã duyệt</span>
                     </div>
@@ -577,14 +587,17 @@
           <v-form ref="receiptForm" v-model="receiptFormValid">
             <v-row>
               <v-col cols="12" sm="6">
-                <v-text-field
+                <v-combobox
                   v-model="newReceipt.supplierName"
+                  :items="supplierNames"
                   label="Nhà cung cấp *"
                   variant="outlined"
                   density="compact"
                   color="primary"
                   :rules="[v => !!v || 'Nhà cung cấp là bắt buộc']"
-                ></v-text-field>
+                  :loading="orderStore.suppliersLoading"
+                  clearable
+                ></v-combobox>
               </v-col>
               <v-col cols="12" sm="6">
                 <v-text-field
@@ -686,8 +699,12 @@
               <div class="text-md text-slate-700">{{ formatDate(selectedReceiptDetail.createdAt) }}</div>
             </div>
             <div>
-              <div class="text-xs text-slate-500 font-semibold uppercase">Người tạo (User ID)</div>
-              <div class="text-md text-slate-700">{{ selectedReceiptDetail.createdBy }}</div>
+              <div class="text-xs text-slate-500 font-semibold uppercase">Người tạo</div>
+              <div class="text-md text-slate-700 font-semibold text-slate-900">{{ getUserName(selectedReceiptDetail.createdBy) }}</div>
+            </div>
+            <div v-if="selectedReceiptDetail.status === 'Confirmed'">
+              <div class="text-xs text-slate-500 font-semibold uppercase">Người duyệt</div>
+              <div class="text-md text-slate-700 font-semibold text-slate-900">{{ getUserName(selectedReceiptDetail.confirmedBy) }}</div>
             </div>
             <div>
               <div class="text-xs text-slate-500 font-semibold uppercase">Ghi chú</div>
@@ -931,10 +948,14 @@
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useProductStore } from '../../stores/product';
 import { useAuthStore } from '../../stores/auth';
+import { useOrderStore } from '../../stores/order';
+import { useUserStore } from '../../stores/user';
 import api from '../../config/api';
 
 const productStore = useProductStore();
 const authStore = useAuthStore();
+const orderStore = useOrderStore();
+const userStore = useUserStore();
 
 const tab = ref('products');
 const searchProduct = ref('');
@@ -956,6 +977,9 @@ onUnmounted(() => {
 const showDialog = ref(false);
 const isEditMode = ref(false);
 const dialogTitle = computed(() => isEditMode.value ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm mới');
+const supplierNames = computed(() => {
+  return orderStore.suppliers.map(s => s.name || s.supplierName || '');
+});
 const formValid = ref(false);
 const saveLoading = ref(false);
 
@@ -1135,6 +1159,11 @@ onMounted(() => {
   productStore.fetchProducts();
   productStore.fetchCategories();
   productStore.fetchReceipts();
+  
+  if (authStore.hasRole(['Admin', 'Warehouse'])) {
+    orderStore.fetchSuppliers();
+    userStore.fetchUsers();
+  }
 });
 
 const formatPrice = (price) => {
@@ -1143,8 +1172,25 @@ const formatPrice = (price) => {
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
-  const date = new Date(dateString);
+  let cleanDateString = dateString;
+  if (!dateString.includes('Z') && !dateString.includes('+') && !/-\d{2}:\d{2}$/.test(dateString)) {
+    cleanDateString = dateString + 'Z';
+  }
+  const date = new Date(cleanDateString);
   return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+};
+
+const getUserName = (userId) => {
+  if (userId === 0 || userId === '0' || userId === null || userId === undefined || userId === '' || userId === 'System') return 'Hệ thống';
+  if (authStore.user && (authStore.user.id === userId || String(authStore.user.id) === String(userId))) {
+    return authStore.user.fullName || authStore.user.email || 'Tôi';
+  }
+  // Tìm kiếm trong store danh sách người dùng của Nhóm 3 (so sánh chuỗi GUID)
+  const foundUser = userStore.users.find(u => String(u.id).toLowerCase() === String(userId).toLowerCase());
+  if (foundUser) {
+    return foundUser.fullName || foundUser.displayName || foundUser.email || `Nhân viên #${userId}`;
+  }
+  return `Nhân viên #${userId}`;
 };
 
 // CRUD handlers
