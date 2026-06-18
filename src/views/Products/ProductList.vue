@@ -144,17 +144,30 @@
             </table>
           </div>
           
-          <div class="mt-4 d-flex flex-column align-center gap-2" v-if="productStore.totalPages > 1">
-            <div class="text-sm text-slate-500 font-medium">
-              Hiển thị {{ (productStore.currentPage - 1) * productStore.pageSize + 1 }} - {{ Math.min(productStore.currentPage * productStore.pageSize, productStore.totalProducts) }} trên tổng số {{ productStore.totalProducts }} sản phẩm (Trang {{ productStore.currentPage }} / {{ productStore.totalPages }})
-            </div>
-            <v-pagination
-              v-model="productStore.currentPage"
-              :length="productStore.totalPages"
-              color="primary"
-              @update:modelValue="(val) => productStore.fetchProducts(val, searchProduct)"
-              rounded="circle"
-            ></v-pagination>
+          <div class="custom-pagination d-flex align-center gap-2 mt-6 justify-center" v-if="productStore.totalPages > 1">
+            <button 
+              class="pagination-btn"
+              :disabled="productStore.currentPage === 1"
+              @click="productStore.fetchProducts(productStore.currentPage - 1, searchProduct)"
+            >
+              ‹
+            </button>
+            <button 
+              v-for="page in productStore.totalPages" 
+              :key="page"
+              class="pagination-btn"
+              :class="{ active: productStore.currentPage === page }"
+              @click="productStore.fetchProducts(page, searchProduct)"
+            >
+              {{ page }}
+            </button>
+            <button 
+              class="pagination-btn"
+              :disabled="productStore.currentPage === productStore.totalPages"
+              @click="productStore.fetchProducts(productStore.currentPage + 1, searchProduct)"
+            >
+              ›
+            </button>
           </div>
         </v-window-item>
 
@@ -349,7 +362,7 @@
                       <!-- Xem chi tiết phiếu nhập (luôn hiện) -->
                       <v-btn
                         icon size="x-small" color="info" variant="text" class="hover:bg-slate-100 me-1"
-                        @click="openEditReceiptDialog(receipt)"
+                        @click="viewReceiptDetails(receipt)"
                         title="Xem chi tiết"
                       >
                         <v-icon>mdi-eye-outline</v-icon>
@@ -382,17 +395,30 @@
             </table>
           </div>
 
-          <div class="mt-4 d-flex flex-column align-center gap-2" v-if="productStore.receiptsTotalPages > 1">
-            <div class="text-sm text-slate-500 font-medium">
-              Hiển thị {{ (productStore.receiptsCurrentPage - 1) * productStore.pageSize + 1 }} - {{ Math.min(productStore.receiptsCurrentPage * productStore.pageSize, productStore.receiptsTotal) }} trên tổng số {{ productStore.receiptsTotal }} phiếu nhập (Trang {{ productStore.receiptsCurrentPage }} / {{ productStore.receiptsTotalPages }})
-            </div>
-            <v-pagination
-              v-model="productStore.receiptsCurrentPage"
-              :length="productStore.receiptsTotalPages"
-              color="primary"
-              @update:modelValue="(val) => productStore.fetchReceipts(val)"
-              rounded="circle"
-            ></v-pagination>
+          <div class="custom-pagination d-flex align-center gap-2 mt-6 justify-center" v-if="productStore.receiptsTotalPages > 1">
+            <button 
+              class="pagination-btn"
+              :disabled="productStore.receiptsCurrentPage === 1"
+              @click="productStore.fetchReceipts(productStore.receiptsCurrentPage - 1)"
+            >
+              ‹
+            </button>
+            <button 
+              v-for="page in productStore.receiptsTotalPages" 
+              :key="page"
+              class="pagination-btn"
+              :class="{ active: productStore.receiptsCurrentPage === page }"
+              @click="productStore.fetchReceipts(page)"
+            >
+              {{ page }}
+            </button>
+            <button 
+              class="pagination-btn"
+              :disabled="productStore.receiptsCurrentPage === productStore.receiptsTotalPages"
+              @click="productStore.fetchReceipts(productStore.receiptsCurrentPage + 1)"
+            >
+              ›
+            </button>
           </div>
         </v-window-item>
       </v-window>
@@ -538,11 +564,11 @@
       </v-card>
     </v-dialog>
 
-    <!-- Dialog Thêm Phiếu Nhập Kho -->
+    <!-- Dialog Thêm/Sửa Phiếu Nhập Kho (Không bị ảnh hưởng bởi dialog Xem Chi Tiết) -->
     <v-dialog v-model="showReceiptDialog" max-width="800px" persistent>
       <v-card class="glass-card text-slate-850" rounded="xl">
         <v-card-title class="d-flex justify-space-between align-center px-6 py-4 border-bottom">
-          <span class="text-h5 font-weight-black">{{ receiptDialogTitle }}</span>
+          <span class="text-h5 font-weight-black">{{ isEditReceipt ? 'Cập Nhật Phiếu Nhập Kho' : 'Tạo Phiếu Nhập Kho Mới' }}</span>
           <v-btn icon variant="text" @click="showReceiptDialog = false">
             <v-icon>mdi-close</v-icon>
           </v-btn>
@@ -558,7 +584,6 @@
                   density="compact"
                   color="primary"
                   :rules="[v => !!v || 'Nhà cung cấp là bắt buộc']"
-                  :disabled="isReceiptReadOnly"
                 ></v-text-field>
               </v-col>
               <v-col cols="12" sm="6">
@@ -568,14 +593,13 @@
                   variant="outlined"
                   density="compact"
                   color="primary"
-                  :disabled="isReceiptReadOnly"
                 ></v-text-field>
               </v-col>
             </v-row>
 
             <div class="d-flex justify-space-between align-center my-4">
               <span class="text-subtitle-1 font-weight-bold">Danh sách mặt hàng nhập</span>
-              <v-btn v-if="!isReceiptReadOnly" color="secondary" size="small" prepend-icon="mdi-plus" @click="addReceiptItem">Thêm dòng</v-btn>
+              <v-btn color="secondary" size="small" prepend-icon="mdi-plus" @click="addReceiptItem">Thêm dòng</v-btn>
             </div>
 
             <v-row v-for="(item, index) in newReceipt.items" :key="index" class="align-center">
@@ -590,7 +614,6 @@
                   density="compact"
                   color="primary"
                   :rules="[v => !!v || 'Sản phẩm là bắt buộc']"
-                  :disabled="isReceiptReadOnly"
                   @update:modelValue="() => onProductSelected(item)"
                 ></v-select>
               </v-col>
@@ -603,7 +626,6 @@
                   density="compact"
                   color="primary"
                   :rules="[v => v > 0 || 'Số lượng > 0']"
-                  :disabled="isReceiptReadOnly"
                 ></v-text-field>
               </v-col>
               <v-col cols="12" sm="3">
@@ -615,11 +637,10 @@
                   density="compact"
                   color="primary"
                   :rules="[v => v >= 0 || 'Giá không âm']"
-                  :disabled="isReceiptReadOnly"
                 ></v-text-field>
               </v-col>
               <v-col cols="12" sm="1" class="text-center">
-                <v-btn icon color="error" variant="text" size="small" @click="removeReceiptItem(index)" :disabled="isReceiptReadOnly || newReceipt.items.length === 1">
+                <v-btn icon color="error" variant="text" size="small" @click="removeReceiptItem(index)" :disabled="newReceipt.items.length === 1">
                   <v-icon>mdi-delete</v-icon>
                 </v-btn>
               </v-col>
@@ -628,9 +649,82 @@
         </v-card-text>
         <v-card-actions class="px-6 pb-6 pt-0">
           <v-spacer></v-spacer>
-          <v-btn v-if="!isReceiptReadOnly" variant="outlined" rounded="xl" color="slate-500" class="px-5 font-weight-bold border-slate-300" @click="showReceiptDialog = false">Hủy</v-btn>
-          <v-btn v-if="!isReceiptReadOnly" variant="elevated" rounded="xl" color="primary" class="px-5 font-weight-bold text-white shadow-md shadow-primary/20" :disabled="!receiptFormValid" :loading="receiptSaveLoading" @click="saveReceipt">Lưu phiếu</v-btn>
-          <v-btn v-else variant="outlined" rounded="xl" color="primary" class="px-5 font-weight-bold" @click="showReceiptDialog = false">Đóng</v-btn>
+          <v-btn variant="outlined" rounded="xl" color="slate-500" class="px-5 font-weight-bold border-slate-300" @click="showReceiptDialog = false">Hủy</v-btn>
+          <v-btn variant="elevated" rounded="xl" color="primary" class="px-5 font-weight-bold text-white shadow-md shadow-primary/20" :disabled="!receiptFormValid" :loading="receiptSaveLoading" @click="saveReceipt">Lưu phiếu</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Dialog Xem Chi Tiết Phiếu Nhập Kho (Mới - Không ảnh hưởng đến dialog Thêm/Sửa) -->
+    <v-dialog v-model="showReceiptDetailDialog" max-width="750px">
+      <v-card class="rounded-xl shadow-xl border border-slate-100">
+        <v-card-title class="px-6 py-4 border-b border-slate-100 bg-slate-50 d-flex justify-space-between align-center">
+          <span class="text-h6 font-bold text-slate-800">Chi tiết Phiếu nhập kho</span>
+          <v-btn icon="mdi-close" variant="text" size="small" @click="showReceiptDetailDialog = false"></v-btn>
+        </v-card-title>
+        <v-card-text class="pa-6" v-if="selectedReceiptDetail">
+          <!-- Thông tin chung -->
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            <div>
+              <div class="text-xs text-slate-500 font-semibold uppercase">Mã phiếu</div>
+              <div class="text-md font-mono font-bold text-blue-700">{{ selectedReceiptDetail.receiptCode }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500 font-semibold uppercase">Nhà cung cấp</div>
+              <div class="text-md font-semibold text-slate-900">{{ selectedReceiptDetail.supplierName || 'Mặc định' }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500 font-semibold uppercase">Trạng thái</div>
+              <div>
+                <span :class="selectedReceiptDetail.status === 'Confirmed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'" class="inline-flex items-center text-xs font-bold px-2.5 py-0.5 rounded-full border">
+                  {{ selectedReceiptDetail.status === 'Confirmed' ? 'Đã duyệt' : 'Bản nháp' }}
+                </span>
+              </div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500 font-semibold uppercase">Ngày lập</div>
+              <div class="text-md text-slate-700">{{ formatDate(selectedReceiptDetail.createdAt) }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500 font-semibold uppercase">Người tạo (User ID)</div>
+              <div class="text-md text-slate-700">{{ selectedReceiptDetail.createdBy }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500 font-semibold uppercase">Ghi chú</div>
+              <div class="text-md text-slate-600">{{ selectedReceiptDetail.note || '-' }}</div>
+            </div>
+          </div>
+
+          <!-- Bảng chi tiết mặt hàng -->
+          <div class="text-subtitle-1 font-weight-bold mb-3">Danh sách mặt hàng</div>
+          <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+            <table class="w-full text-left border-collapse text-slate-700 text-sm">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200">
+                  <th class="px-4 py-3 font-semibold text-slate-500">Sản phẩm</th>
+                  <th class="px-4 py-3 font-semibold text-slate-500 text-right">Số lượng</th>
+                  <th class="px-4 py-3 font-semibold text-slate-500 text-right">Đơn giá nhập</th>
+                  <th class="px-4 py-3 font-semibold text-slate-500 text-right">Thành tiền</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr v-for="item in selectedReceiptDetail.items" :key="item.id" class="hover:bg-slate-50/50">
+                  <td class="px-4 py-3 font-medium text-slate-900">{{ getProductName(item.productId) }}</td>
+                  <td class="px-4 py-3 text-right">{{ item.quantity }}</td>
+                  <td class="px-4 py-3 text-right">{{ formatPrice(item.importPrice) }}</td>
+                  <td class="px-4 py-3 text-right font-semibold text-slate-900">{{ formatPrice(item.subTotal) }}</td>
+                </tr>
+                <tr class="bg-slate-50 font-bold border-t border-slate-200">
+                  <td colspan="3" class="px-4 py-3 text-right">Tổng tiền:</td>
+                  <td class="px-4 py-3 text-right text-emerald-600">{{ formatPrice(selectedReceiptDetail.totalAmount) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </v-card-text>
+        <v-card-actions class="px-6 py-4 border-t border-slate-100 bg-slate-50">
+          <v-spacer></v-spacer>
+          <v-btn color="slate-600" variant="text" class="text-none px-4" @click="showReceiptDetailDialog = false">Đóng</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -929,17 +1023,28 @@ const newReceipt = ref({
   ]
 });
 
-// Trạng thái khóa biểu mẫu khi phiếu đã duyệt
-const isReceiptReadOnly = computed(() => {
-  if (!isEditReceipt.value || !editingReceiptId.value) return false;
-  const currentReceipt = productStore.receipts.find(r => r.id === editingReceiptId.value);
-  return currentReceipt?.status === 'Confirmed';
-});
+// Dialog xem chi tiết phiếu nhập mới (độc lập hoàn toàn)
+const showReceiptDetailDialog = ref(false);
+const selectedReceiptDetail = ref(null);
 
-const receiptDialogTitle = computed(() => {
-  if (isReceiptReadOnly.value) return 'Chi Tiết Phiếu Nhập Kho (Đã Duyệt)';
-  return isEditReceipt.value ? 'Cập Nhật Phiếu Nhập Kho (Bản Nháp)' : 'Tạo Phiếu Nhập Kho Mới';
-});
+const viewReceiptDetails = async (receipt) => {
+  try {
+    const res = await productStore.fetchReceiptDetail(receipt.id);
+    if (res.success && res.data) {
+      selectedReceiptDetail.value = res.data;
+      showReceiptDetailDialog.value = true;
+    } else {
+      showNotify(res.message || 'Lỗi tải chi tiết phiếu nhập', 'error');
+    }
+  } catch (e) {
+    showNotify('Lỗi tải chi tiết phiếu nhập', 'error');
+  }
+};
+
+const getProductName = (productId) => {
+  const prod = productStore.allProducts.find(p => p.id === productId);
+  return prod ? prod.name : `Sản phẩm #${productId}`;
+};
 
 // Tự động điền giá nhập khi chọn sản phẩm
 const onProductSelected = (item) => {
@@ -1399,5 +1504,37 @@ const handleDeleteCategory = async (id) => {
 }
 .gap-4 {
   gap: 16px;
+}
+.custom-pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pagination-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background-color: #f3f4f6 !important;
+  color: #374151 !important;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+.pagination-btn:hover {
+  background-color: #e5e7eb !important;
+}
+.pagination-btn.active {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  font-weight: bold;
+}
+.pagination-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 </style>
