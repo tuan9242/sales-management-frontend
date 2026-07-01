@@ -112,10 +112,45 @@
                     <span class="text-label-sm text-on-surface-variant">{{ formatStatus(user.status) }}</span>
                   </div>
                 </td>
-                <td class="px-md py-3 text-right">
-                  <button class="text-outline hover:text-primary p-1 rounded-full hover:bg-surface-container-high transition-colors" @click.stop="toggleDetail(user)">
-                    <span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
-                  </button>
+                <td class="px-md py-3 text-right" @click.stop>
+                  <div class="inline-flex items-center gap-1.5 bg-surface-container-low/80 p-1.5 rounded-xl border border-outline-variant/60 shadow-sm">
+                    <!-- Nút Xem Chi Tiết (Tím Violet 3D) -->
+                    <button 
+                      @click="toggleDetail(user)" 
+                      class="px-2 py-1 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-200/80 shadow-[0_2px_4px_rgba(79,70,229,0.12)] hover:bg-indigo-600 hover:text-white hover:shadow-[0_4px_8px_rgba(79,70,229,0.28)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center justify-center" 
+                      title="Xem chi tiết phân quyền"
+                    >
+                      <span class="material-symbols-outlined text-[17px]">visibility</span>
+                    </button>
+
+                    <!-- Nút Chỉnh Sửa & Đổi Mật Khẩu (Xanh Blue 3D) -->
+                    <button 
+                      @click="openEditModal(user)" 
+                      class="px-2 py-1 rounded-lg bg-blue-50 text-blue-600 border border-blue-200/80 shadow-[0_2px_4px_rgba(37,99,235,0.12)] hover:bg-blue-600 hover:text-white hover:shadow-[0_4px_8px_rgba(37,99,235,0.28)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center justify-center" 
+                      title="Chỉnh sửa thông tin & Mật khẩu"
+                    >
+                      <span class="material-symbols-outlined text-[17px]">edit</span>
+                    </button>
+
+                    <!-- Nút Khóa / Mở Khóa (Vàng Amber / Xanh Emerald 3D) -->
+                    <button 
+                      @click="toggleUserLock(user)" 
+                      class="px-2 py-1 rounded-lg border shadow-[0_2px_4px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center justify-center" 
+                      :class="user.status === 'Blocked' || user.status === 2 ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-600 hover:text-white hover:shadow-[0_4px_8px_rgba(16,185,129,0.28)]' : 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-500 hover:text-white hover:shadow-[0_4px_8px_rgba(217,119,6,0.28)]'"
+                      :title="user.status === 'Blocked' || user.status === 2 ? 'Mở khóa tài khoản' : 'Khóa tài khoản'"
+                    >
+                      <span class="material-symbols-outlined text-[17px]">{{ user.status === 'Blocked' || user.status === 2 ? 'lock_open' : 'lock' }}</span>
+                    </button>
+
+                    <!-- Nút Xóa Tài Khoản (Đỏ Rose 3D) -->
+                    <button 
+                      @click="removeUser(user)" 
+                      class="px-2 py-1 rounded-lg bg-rose-50 text-rose-600 border border-rose-200/80 shadow-[0_2px_4px_rgba(225,29,72,0.12)] hover:bg-rose-600 hover:text-white hover:shadow-[0_4px_8px_rgba(225,29,72,0.28)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center justify-center" 
+                      title="Xóa vĩnh viễn"
+                    >
+                      <span class="material-symbols-outlined text-[17px]">delete</span>
+                    </button>
+                  </div>
                 </td>
               </tr>
               
@@ -315,6 +350,60 @@
         </form>
       </div>
     </div>
+
+    <!-- Edit User Modal -->
+    <div v-if="showEditModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-surface-container-lowest rounded-xl shadow-lg w-full max-w-md flex flex-col overflow-hidden">
+        <div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+          <h2 class="font-title-lg text-title-lg text-primary font-bold">Chỉnh Sửa Thông Tin User</h2>
+          <button class="text-outline hover:text-error p-1 rounded-full hover:bg-surface-container-high transition-colors" @click="showEditModal = false">
+            <span class="material-symbols-outlined text-[20px]">close</span>
+          </button>
+        </div>
+        
+        <form @submit.prevent="submitEditUser" class="p-6 flex flex-col gap-4">
+          <div>
+            <label class="block text-label-sm font-bold text-on-surface-variant mb-1">Email (Tài khoản định danh)</label>
+            <input v-model="editingUser.email" disabled type="email" class="w-full bg-surface-container-high/40 border border-outline-variant rounded-lg px-3 py-2 text-body-sm text-outline cursor-not-allowed font-data-mono" />
+          </div>
+          <div>
+            <label class="block text-label-sm font-bold text-on-surface-variant mb-1">Họ Tên <span class="text-error">*</span></label>
+            <input v-model="editingUser.fullName" type="text" required class="w-full bg-surface-container border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Nguyễn Văn A" />
+          </div>
+          <div>
+            <label class="block text-label-sm font-bold text-on-surface-variant mb-1">Số điện thoại</label>
+            <input v-model="editingUser.phone" type="text" class="w-full bg-surface-container border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="0987654321" />
+          </div>
+          <div>
+            <label class="block text-label-sm font-bold text-on-surface-variant mb-1">Trạng thái</label>
+            <select v-model="editingUser.status" class="w-full bg-surface-container border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
+              <option :value="0">Đang hoạt động (Active)</option>
+              <option :value="1">Chưa kích hoạt (Inactive)</option>
+              <option :value="2">Bị khóa (Blocked)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-label-sm font-bold text-primary mb-1 flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[18px]">key</span>
+              Cập Nhật Mật Khẩu Mới
+            </label>
+            <input v-model="editingUser.newPassword" type="password" class="w-full bg-surface-container border border-primary/40 rounded-lg px-3 py-2 text-body-sm focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-inner placeholder:text-outline" placeholder="Nhập mật khẩu mới (Bỏ trống nếu không đổi)..." />
+            <span class="text-[11px] text-on-surface-variant italic mt-1 block">* Lưu ý: Yêu cầu tối thiểu 8 ký tự, có chữ hoa, số và ký tự đặc biệt.</span>
+          </div>
+          
+          <div v-if="editError" class="text-error text-label-sm mt-2 bg-error-container/20 p-2 rounded whitespace-pre-line">
+            {{ editError }}
+          </div>
+          
+          <div class="mt-4 flex justify-end gap-3">
+            <button type="button" class="px-4 py-2 border border-outline-variant text-on-surface rounded-lg font-label-md hover:bg-surface-container-high transition-colors" @click="showEditModal = false">Hủy</button>
+            <button type="submit" class="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md hover:bg-primary-container transition-colors disabled:opacity-50 font-semibold" :disabled="isEditingSubmitting">
+              {{ isEditingSubmitting ? 'Đang lưu...' : 'Lưu Thay Đổi' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -338,6 +427,18 @@ const newUser = ref({
   password: '',
   phone: '',
   role: 1
+});
+
+// Edit User Modal State
+const showEditModal = ref(false);
+const isEditingSubmitting = ref(false);
+const editError = ref('');
+const editingUser = ref({
+  id: '',
+  email: '',
+  fullName: '',
+  phone: '',
+  status: 0
 });
 
 onMounted(async () => {
@@ -386,38 +487,44 @@ const closeDetail = () => {
   selectedUser.value = null;
 };
 
-const handleBlockToggle = async () => {
-  if (!selectedUser.value) return;
-  
-  const isCurrentlyBlocked = selectedUser.value.status === 'Blocked' || selectedUser.value.status === 2;
+const toggleUserLock = async (user) => {
+  if (!user) return;
+  const isCurrentlyBlocked = user.status === 'Blocked' || user.status === 2;
   const newStatus = isCurrentlyBlocked ? 'Active' : 'Blocked';
   const statusInt = newStatus === 'Active' ? 0 : 2; 
   
-  const success = await userStore.updateUserStatus(selectedUser.value.id, statusInt);
+  const success = await userStore.updateUserStatus(user.id, statusInt);
   if (success) {
     alert(`Đã ${newStatus === 'Active' ? 'mở khóa' : 'khóa'} tài khoản thành công!`);
     await userStore.fetchUsers();
-    selectedUser.value = userStore.users.find(u => u.id === selectedUser.value.id);
+    if (selectedUser.value && selectedUser.value.id === user.id) {
+      selectedUser.value = userStore.users.find(u => u.id === user.id);
+    }
   } else {
     alert('Có lỗi xảy ra khi cập nhật trạng thái.');
   }
 };
 
-const handleDeleteUser = async () => {
-  if (!selectedUser.value) return;
-  
-  if (!window.confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản "${selectedUser.value.fullName}" không?\n\nHành động này không thể hoàn tác!`)) {
+const handleBlockToggle = () => toggleUserLock(selectedUser.value);
+
+const removeUser = async (user) => {
+  if (!user) return;
+  if (!window.confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản "${user.fullName}" không?\n\nHành động này không thể hoàn tác!`)) {
     return;
   }
   
-  const success = await userStore.deleteUser(selectedUser.value.id);
+  const success = await userStore.deleteUser(user.id);
   if (success) {
     alert('Đã xóa tài khoản thành công!');
-    selectedUser.value = null; // Đóng side panel
+    if (selectedUser.value && selectedUser.value.id === user.id) {
+      selectedUser.value = null;
+    }
   } else {
     alert('Có lỗi xảy ra khi xóa tài khoản. Vui lòng thử lại.');
   }
 };
+
+const handleDeleteUser = () => removeUser(selectedUser.value);
 
 const openAddModal = () => {
   addError.value = '';
@@ -448,6 +555,68 @@ const submitAddUser = async () => {
     }
   }
   isSubmitting.value = false;
+};
+
+const openEditModal = (user) => {
+  editError.value = '';
+  let statusInt = 0;
+  if (user.status === 'Inactive' || user.status === 1) statusInt = 1;
+  if (user.status === 'Blocked' || user.status === 2) statusInt = 2;
+  
+  editingUser.value = {
+    id: user.id,
+    email: user.email,
+    fullName: user.fullName,
+    phone: user.phone || '',
+    status: statusInt,
+    newPassword: ''
+  };
+  showEditModal.value = true;
+};
+
+const submitEditUser = async () => {
+  isEditingSubmitting.value = true;
+  editError.value = '';
+  
+  // 1. Cập nhật thông tin cơ bản
+  const result = await userStore.updateUser(editingUser.value.id, {
+    fullName: editingUser.value.fullName,
+    phone: editingUser.value.phone,
+    status: Number(editingUser.value.status)
+  });
+  
+  let pwSuccess = true;
+  let pwErrorMsg = '';
+
+  // 2. Nếu có nhập mật khẩu mới thì gọi API đổi mật khẩu
+  if (editingUser.value.newPassword) {
+    const pwResult = await userStore.adminResetPassword(editingUser.value.id, editingUser.value.newPassword);
+    pwSuccess = pwResult.success;
+    if (!pwSuccess) pwErrorMsg = pwResult.message;
+  }
+  
+  if (result.success && pwSuccess) {
+    alert('Đã lưu thông tin' + (editingUser.value.newPassword ? ' & Cập nhật mật khẩu mới' : '') + ' thành công!');
+    await userStore.fetchUsers();
+    if (selectedUser.value && selectedUser.value.id === editingUser.value.id) {
+      selectedUser.value = userStore.users.find(u => u.id === editingUser.value.id);
+    }
+    showEditModal.value = false;
+  } else {
+    let errList = [];
+    if (!result.success) {
+      if (result.errors && typeof result.errors === 'object') {
+        errList.push(...Object.values(result.errors).flat());
+      } else {
+        errList.push(result.message || 'Lỗi cập nhật thông tin.');
+      }
+    }
+    if (!pwSuccess) {
+      errList.push('⚠️ Cập nhật mật khẩu thất bại: ' + pwErrorMsg);
+    }
+    editError.value = errList.join('\n');
+  }
+  isEditingSubmitting.value = false;
 };
 
 // Role Formatting

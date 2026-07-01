@@ -47,6 +47,24 @@ export const useUserStore = defineStore('user', () => {
     }
   };
 
+  const updateUser = async (userId, userData) => {
+    try {
+      const response = await api.put(`/api/users/${userId}`, userData);
+      const index = users.value.findIndex(u => u.id === userId);
+      if (index !== -1) {
+        users.value[index] = { ...users.value[index], ...userData };
+      }
+      return { success: true };
+    } catch (err) {
+      console.error('Lỗi khi cập nhật user:', err);
+      return { 
+        success: false, 
+        message: err.response?.data?.message || 'Có lỗi xảy ra khi cập nhật',
+        errors: err.response?.data?.errors
+      };
+    }
+  };
+
   const deleteUser = async (userId) => {
     try {
       await api.delete(`/api/users/${userId}`);
@@ -75,12 +93,29 @@ export const useUserStore = defineStore('user', () => {
     }
   };
 
+  const adminResetPassword = async (userId, newPassword) => {
+    try {
+      await api.put(`/api/users/${userId}/admin-reset-password`, {
+        newPassword: newPassword
+      });
+      return { success: true };
+    } catch (err) {
+      console.error('Lỗi khi đổi mật khẩu:', err);
+      return { 
+        success: false, 
+        message: err.response?.data?.message || 'Không thể đặt lại mật khẩu'
+      };
+    }
+  };
+
   return {
     users,
     loading,
     error,
     fetchUsers,
     updateUserStatus,
+    updateUser,
+    adminResetPassword,
     deleteUser,
     createUser
   };
