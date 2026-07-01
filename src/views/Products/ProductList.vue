@@ -30,7 +30,7 @@
         <!-- Products Tab -->
         <v-window-item value="products">
           <v-row class="mb-6 align-center">
-            <v-col cols="12" sm="6" md="4">
+            <v-col cols="12" sm="3" md="3">
               <v-text-field
                 v-model="searchProduct"
                 prepend-inner-icon="mdi-magnify"
@@ -41,6 +41,38 @@
                 color="primary"
                 rounded="xl"
               ></v-text-field>
+            </v-col>
+            <v-col cols="12" sm="3" md="3">
+              <v-select
+                v-model="filterCategory"
+                :items="categorySelectItems"
+                item-title="name"
+                item-value="id"
+                label="Lọc theo danh mục"
+                variant="outlined"
+                density="compact"
+                hide-details
+                color="primary"
+                rounded="xl"
+              ></v-select>
+            </v-col>
+            <v-col cols="12" sm="3" md="2">
+              <v-select
+                v-model="filterStatus"
+                :items="[
+                  { value: '', title: 'Tất cả trạng thái' },
+                  { value: 'true', title: 'Đang bán' },
+                  { value: 'false', title: 'Ngừng bán' }
+                ]"
+                item-title="title"
+                item-value="value"
+                label="Lọc theo trạng thái"
+                variant="outlined"
+                density="compact"
+                hide-details
+                color="primary"
+                rounded="xl"
+              ></v-select>
             </v-col>
             <v-spacer></v-spacer>
             <v-col cols="auto" v-if="authStore.hasRole(['Admin', 'Warehouse'])">
@@ -60,6 +92,14 @@
             <table class="w-full text-left border-collapse text-slate-700">
               <thead>
                 <tr>
+                  <th class="px-4 py-4 text-left border-b border-slate-200" v-if="authStore.hasRole(['Admin', 'Warehouse'])" style="width: 48px;">
+                    <v-checkbox-btn
+                      v-model="isAllSelected"
+                      color="primary"
+                      hide-details
+                      density="compact"
+                    ></v-checkbox-btn>
+                  </th>
                   <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-left border-b border-slate-200">Mã SP</th>
                   <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-left border-b border-slate-200">Ảnh</th>
                   <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-left border-b border-slate-200">Tên sản phẩm</th>
@@ -73,16 +113,25 @@
               </thead>
               <tbody class="divide-y divide-slate-100 bg-white">
                 <tr v-if="productStore.loading">
-                  <td colspan="8" class="text-center py-8">
+                  <td :colspan="authStore.hasRole(['Admin', 'Warehouse']) ? 10 : 8" class="text-center py-8">
                     <v-progress-circular indeterminate color="primary"></v-progress-circular>
                   </td>
                 </tr>
                 <tr v-else-if="productStore.products.length === 0">
-                  <td colspan="8" class="text-center py-8 text-slate-400">
+                  <td :colspan="authStore.hasRole(['Admin', 'Warehouse']) ? 10 : 8" class="text-center py-8 text-slate-400">
                     Không tìm thấy sản phẩm nào
                   </td>
                 </tr>
-                <tr v-else v-for="product in productStore.products" :key="product.id" class="hover:bg-slate-50/50 transition-colors duration-150">
+                <tr v-else v-for="product in productStore.products" :key="product.id" class="hover:bg-slate-50/50 transition-colors duration-150" :class="{'bg-blue-50/20': selectedProductIds.includes(product.id)}">
+                  <td class="px-4 py-4 whitespace-nowrap" v-if="authStore.hasRole(['Admin', 'Warehouse'])">
+                    <v-checkbox-btn
+                      v-model="selectedProductIds"
+                      :value="product.id"
+                      color="primary"
+                      hide-details
+                      density="compact"
+                    ></v-checkbox-btn>
+                  </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <span class="text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-1 rounded-md font-mono whitespace-nowrap">
                       {{ product.code }}
@@ -110,34 +159,20 @@
                     </span>
                   </td>
                   <td class="px-6 py-4" v-if="authStore.hasRole(['Admin', 'Warehouse'])">
-                    <v-menu>
-                      <template v-slot:activator="{ props }">
-                        <v-btn icon size="x-small" variant="text" color="primary" v-bind="props" class="hover:bg-slate-100">
-                          <v-icon>mdi-dots-vertical</v-icon>
-                        </v-btn>
-                      </template>
-                      <v-list class="rounded-xl" density="compact">
-                        <v-list-item @click="openDetailsDialog(product.id)" class="hover:bg-slate-100">
-                          <template v-slot:prepend>
-                            <v-icon color="info" size="small">mdi-eye-outline</v-icon>
-                          </template>
-                          <v-list-item-title class="text-sm">Xem chi tiết</v-list-item-title>
-                        </v-list-item>
-                        <v-list-item @click="openEditDialog(product)" class="hover:bg-slate-100">
-                          <template v-slot:prepend>
-                            <v-icon color="primary" size="small">mdi-pencil-outline</v-icon>
-                          </template>
-                          <v-list-item-title class="text-sm">Sửa sản phẩm</v-list-item-title>
-                        </v-list-item>
-                        <v-divider class="my-1" v-if="authStore.hasRole('Admin')"></v-divider>
-                        <v-list-item v-if="authStore.hasRole('Admin')" @click="toggleProductStatus(product.id, product.isActive)" class="hover:bg-slate-100">
-                          <template v-slot:prepend>
-                            <v-icon :color="product.isActive ? 'warning' : 'success'" size="small">{{ product.isActive ? 'mdi-pause-circle-outline' : 'mdi-play-circle-outline' }}</v-icon>
-                          </template>
-                          <v-list-item-title class="text-sm">{{ product.isActive ? 'Ngừng bán' : 'Khôi phục' }}</v-list-item-title>
-                        </v-list-item>
-                      </v-list>
-                    </v-menu>
+                    <div class="d-flex align-center gap-1">
+                      <v-btn icon size="x-small" color="info" variant="text" class="hover:bg-slate-100" title="Xem chi tiết" @click="openDetailsDialog(product.id)">
+                        <v-icon size="18">mdi-eye-outline</v-icon>
+                      </v-btn>
+                      <v-btn icon size="x-small" color="primary" variant="text" class="hover:bg-slate-100" title="Sửa" @click="openEditDialog(product)">
+                        <v-icon size="18">mdi-pencil-outline</v-icon>
+                      </v-btn>
+                      <v-btn v-if="authStore.hasRole('Admin')" icon size="x-small" :color="product.isActive ? 'warning' : 'success'" variant="text" class="hover:bg-slate-100" :title="product.isActive ? 'Ngừng bán' : 'Khôi phục'" @click="toggleProductStatus(product.id, product.isActive)">
+                        <v-icon size="18">{{ product.isActive ? 'mdi-pause-circle-outline' : 'mdi-play-circle-outline' }}</v-icon>
+                      </v-btn>
+                      <v-btn v-if="authStore.hasRole('Admin') && !product.hasTransactions" icon size="x-small" color="error" variant="text" class="hover:bg-slate-100" title="Xóa vĩnh viễn" @click="handleSingleDelete(product.id)">
+                        <v-icon size="18">mdi-trash-can-outline</v-icon>
+                      </v-btn>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -148,7 +183,7 @@
             <button 
               class="pagination-btn"
               :disabled="productStore.currentPage === 1"
-              @click="productStore.fetchProducts(productStore.currentPage - 1, searchProduct)"
+              @click="loadProductsWithFilters(productStore.currentPage - 1)"
             >
               ‹
             </button>
@@ -157,18 +192,60 @@
               :key="page"
               class="pagination-btn"
               :class="{ active: productStore.currentPage === page }"
-              @click="productStore.fetchProducts(page, searchProduct)"
+              @click="loadProductsWithFilters(page)"
             >
               {{ page }}
             </button>
             <button 
               class="pagination-btn"
               :disabled="productStore.currentPage === productStore.totalPages"
-              @click="productStore.fetchProducts(productStore.currentPage + 1, searchProduct)"
+              @click="loadProductsWithFilters(productStore.currentPage + 1)"
             >
               ›
             </button>
           </div>
+
+          <!-- Floating Bulk Action Bar -->
+          <v-slide-y-reverse-transition>
+            <div v-if="selectedProductIds.length > 0" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-6 py-3 rounded-xl shadow-2xl flex align-center gap-6 border border-slate-800" style="position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; align-items: center;">
+              <span class="text-sm font-semibold whitespace-nowrap">Đã chọn <span class="text-blue-400 font-bold">{{ selectedProductIds.length }}</span> sản phẩm</span>
+              <div class="h-4 w-[1px] bg-slate-700"></div>
+              <div class="flex items-center gap-2" style="display: flex; gap: 8px;">
+                <v-btn
+                  size="small"
+                  color="warning"
+                  prepend-icon="mdi-pause-circle-outline"
+                  variant="flat"
+                  class="rounded-xl text-none px-4"
+                  @click="handleBulkDeactivate"
+                >
+                  Ngừng bán
+                </v-btn>
+                <v-btn
+                  size="small"
+                  color="success"
+                  prepend-icon="mdi-play-circle-outline"
+                  variant="flat"
+                  class="rounded-xl text-none px-4"
+                  @click="handleBulkActivate"
+                >
+                  Bán lại
+                </v-btn>
+                <v-btn
+                  v-if="authStore.hasRole('Admin')"
+                  size="small"
+                  color="error"
+                  prepend-icon="mdi-trash-can-outline"
+                  variant="flat"
+                  class="rounded-xl text-none px-4"
+                  @click="handleBulkDelete"
+                >
+                  Xóa vĩnh viễn
+                </v-btn>
+              </div>
+              <v-btn icon="mdi-close" variant="text" size="small" color="white" class="ml-2" @click="selectedProductIds = []"></v-btn>
+            </div>
+          </v-slide-y-reverse-transition>
         </v-window-item>
 
         <!-- Categories Tab -->
@@ -305,19 +382,41 @@
 
         <!-- Stock Tab -->
         <v-window-item value="stock">
-          <div class="d-flex justify-space-between align-center mb-6">
-            <h3 class="text-h6 font-weight-bold text-slate-900">Danh sách Phiếu nhập kho (Stock Receipts)</h3>
-            <v-btn
-              v-if="authStore.hasRole(['Admin', 'Warehouse'])"
-              color="primary"
-              prepend-icon="mdi-plus"
-              class="rounded-xl shadow-md px-6 py-2 transition-all hover:-translate-y-[1px] hover:shadow-lg active:scale-98"
-              elevation="2"
-              @click="openReceiptDialog"
-            >
-              Tạo phiếu nhập mới
-            </v-btn>
-          </div>
+          <v-row class="mb-6 align-center">
+            <v-col cols="12" sm="auto">
+              <h3 class="text-h6 font-weight-bold text-slate-900">Danh sách Phiếu nhập kho (Stock Receipts)</h3>
+            </v-col>
+            <v-spacer></v-spacer>
+            <v-col cols="12" sm="3">
+              <v-select
+                v-model="filterReceiptStatus"
+                :items="[
+                  { value: '', title: 'Tất cả trạng thái' },
+                  { value: 'Draft', title: 'Bản nháp' },
+                  { value: 'Confirmed', title: 'Đã duyệt' }
+                ]"
+                item-title="title"
+                item-value="value"
+                label="Lọc theo trạng thái"
+                variant="outlined"
+                density="compact"
+                hide-details
+                color="primary"
+                rounded="xl"
+              ></v-select>
+            </v-col>
+            <v-col cols="auto" v-if="authStore.hasRole(['Admin', 'Warehouse'])">
+              <v-btn
+                color="primary"
+                prepend-icon="mdi-plus"
+                class="rounded-xl shadow-md px-6 py-2 transition-all hover:-translate-y-[1px] hover:shadow-lg active:scale-98"
+                elevation="2"
+                @click="openReceiptDialog"
+              >
+                Tạo phiếu nhập mới
+              </v-btn>
+            </v-col>
+          </v-row>
           <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
             <table class="w-full text-left border-collapse text-slate-700">
               <thead>
@@ -409,7 +508,7 @@
             <button 
               class="pagination-btn"
               :disabled="productStore.receiptsCurrentPage === 1"
-              @click="productStore.fetchReceipts(productStore.receiptsCurrentPage - 1)"
+              @click="productStore.fetchReceipts(productStore.receiptsCurrentPage - 1, filterReceiptStatus)"
             >
               ‹
             </button>
@@ -418,14 +517,14 @@
               :key="page"
               class="pagination-btn"
               :class="{ active: productStore.receiptsCurrentPage === page }"
-              @click="productStore.fetchReceipts(page)"
+              @click="productStore.fetchReceipts(page, filterReceiptStatus)"
             >
               {{ page }}
             </button>
             <button 
               class="pagination-btn"
               :disabled="productStore.receiptsCurrentPage === productStore.receiptsTotalPages"
-              @click="productStore.fetchReceipts(productStore.receiptsCurrentPage + 1)"
+              @click="productStore.fetchReceipts(productStore.receiptsCurrentPage + 1, filterReceiptStatus)"
             >
               ›
             </button>
@@ -960,18 +1059,121 @@ const userStore = useUserStore();
 const tab = ref('products');
 const searchProduct = ref('');
 
+// Filters State
+const filterCategory = ref(null);
+const filterStatus = ref('');
+const filterReceiptStatus = ref('');
+
+// Selection State for Bulk Actions
+const selectedProductIds = ref([]);
+
+const isAllSelected = computed({
+  get() {
+    return productStore.products.length > 0 && selectedProductIds.value.length === productStore.products.length;
+  },
+  set(val) {
+    if (val) {
+      selectedProductIds.value = productStore.products.map(p => p.id);
+    } else {
+      selectedProductIds.value = [];
+    }
+  }
+});
+
+// Category Select Dropdown Items
+const categorySelectItems = computed(() => {
+  return [
+    { id: null, name: 'Tất cả danh mục' },
+    ...flatCategories.value
+  ];
+});
+
+// Helper to fetch products with current filters
+const loadProductsWithFilters = (page = 1) => {
+  productStore.fetchProducts(
+    page,
+    searchProduct.value,
+    filterCategory.value,
+    filterStatus.value
+  );
+};
+
 // Watch search and reload products with debounce
 let searchTimeout = null;
 watch(searchProduct, (newVal) => {
   if (searchTimeout) clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
-    productStore.fetchProducts(1, newVal);
+    loadProductsWithFilters(1);
   }, 300);
+});
+
+// Watch filters
+watch([filterCategory, filterStatus], () => {
+  loadProductsWithFilters(1);
+});
+
+watch(filterReceiptStatus, (newVal) => {
+  productStore.fetchReceipts(1, newVal);
+});
+
+// Reset selection on products list change
+watch(() => productStore.products, () => {
+  selectedProductIds.value = [];
 });
 
 onUnmounted(() => {
   if (searchTimeout) clearTimeout(searchTimeout);
 });
+
+// Bulk Action Handlers
+const handleBulkDeactivate = async () => {
+  if (!confirm(`Bạn có chắc chắn muốn ngừng bán ${selectedProductIds.value.length} sản phẩm đã chọn?`)) return;
+  const res = await productStore.bulkDeactivateProduct(selectedProductIds.value);
+  if (res.success) {
+    showNotify(`Đã ngừng bán thành công các sản phẩm được chọn.`);
+    selectedProductIds.value = [];
+  } else {
+    showNotify(res.message || 'Lỗi thao tác hàng loạt', 'error');
+  }
+};
+
+const handleBulkActivate = async () => {
+  if (!confirm(`Bạn có muốn khôi phục bán lại cho ${selectedProductIds.value.length} sản phẩm đã chọn?`)) return;
+  const res = await productStore.bulkActivateProduct(selectedProductIds.value);
+  if (res.success) {
+    showNotify(`Đã khôi phục trạng thái bán thành công.`);
+    selectedProductIds.value = [];
+  } else {
+    showNotify(res.message || 'Lỗi thao tác hàng loạt', 'error');
+  }
+};
+
+const handleBulkDelete = async () => {
+  if (!confirm(`CẢNH BÁO: Bạn có chắc chắn muốn xóa vĩnh viễn ${selectedProductIds.value.length} sản phẩm đã chọn? Chỉ những sản phẩm CHƯA phát sinh giao dịch mới có thể xóa.`)) return;
+  const res = await productStore.bulkDeleteProduct(selectedProductIds.value);
+  if (res.success) {
+    const data = res.data;
+    if (data.failedCount > 0) {
+      showNotify(`Đã xóa thành công ${data.successCount} sản phẩm. Thất bại ${data.failedCount} sản phẩm do đã có giao dịch.`, 'warning');
+    } else {
+      showNotify(`Đã xóa vĩnh viễn thành công ${data.successCount} sản phẩm.`);
+    }
+    selectedProductIds.value = [];
+  } else {
+    showNotify(res.message || 'Lỗi xóa hàng loạt', 'error');
+  }
+};
+
+// Single Delete Handler
+const handleSingleDelete = async (id) => {
+  if (!confirm('Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm này? Thao tác này chỉ thực hiện được nếu sản phẩm chưa phát sinh giao dịch nhập/xuất kho.')) return;
+  const res = await productStore.deleteProduct(id);
+  if (res.success) {
+    showNotify('Đã xóa vĩnh viễn sản phẩm thành công!');
+  } else {
+    showNotify(res.message || 'Xóa sản phẩm thất bại.', 'error');
+  }
+};
 
 // Dialog states
 const showDialog = ref(false);
@@ -1303,8 +1505,8 @@ const toggleProductStatus = async (id, currentStatus) => {
   if (!confirm(message)) return;
 
   if (currentStatus) {
-    // Ngừng bán: gọi soft delete
-    const res = await productStore.deleteProduct(id);
+    // Ngừng bán: gọi update isActive = false
+    const res = await productStore.updateProduct(id, { isActive: false });
     if (res.success) {
       showNotify('Đã chuyển sản phẩm sang trạng thái Ngừng bán!');
     } else {

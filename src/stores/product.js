@@ -42,13 +42,17 @@ export const useProductStore = defineStore('product', () => {
    * Fetches paginated list of products with optional filters.
    * Backend returns: { data: ProductDto[], page, pageSize, totalCount, totalPages }
    */
-  const fetchProducts = async (page = 1, search = null, categoryId = null) => {
+  const fetchProducts = async (page = 1, search = null, categoryId = null, isActive = null, sortBy = 'createdAt', sortDesc = true) => {
     loading.value = true;
     error.value = null;
     try {
       const params = { page, pageSize: pageSize.value };
       if (search) params.search = search;
       if (categoryId) params.categoryId = categoryId;
+      if (isActive !== null && isActive !== undefined && isActive !== '') params.isActive = isActive;
+      if (sortBy) params.sortBy = sortBy;
+      params.sortDesc = sortDesc;
+      
       const response = await api.get('/api/products', { params });
       // Backend trả về PaginatedResult<ProductDto>
       const result = response.data;
@@ -61,6 +65,36 @@ export const useProductStore = defineStore('product', () => {
       products.value = [];
     } finally {
       loading.value = false;
+    }
+  };
+
+  const bulkDeactivateProduct = async (ids) => {
+    try {
+      const response = await api.post('/api/products/bulk-deactivate', ids);
+      await fetchProducts(currentPage.value);
+      return { success: true, data: response.data };
+    } catch (err) {
+      return { success: false, message: err.response?.data?.message || 'Ngừng bán hàng loạt thất bại' };
+    }
+  };
+
+  const bulkActivateProduct = async (ids) => {
+    try {
+      const response = await api.post('/api/products/bulk-activate', ids);
+      await fetchProducts(currentPage.value);
+      return { success: true, data: response.data };
+    } catch (err) {
+      return { success: false, message: err.response?.data?.message || 'Khôi phục hàng loạt thất bại' };
+    }
+  };
+
+  const bulkDeleteProduct = async (ids) => {
+    try {
+      const response = await api.post('/api/products/bulk-delete', ids);
+      await fetchProducts(currentPage.value);
+      return { success: true, data: response.data };
+    } catch (err) {
+      return { success: false, message: err.response?.data?.message || 'Xóa hàng loạt thất bại' };
     }
   };
 
@@ -311,6 +345,9 @@ export const useProductStore = defineStore('product', () => {
     createProduct,
     updateProduct,
     deleteProduct,
+    bulkDeactivateProduct,
+    bulkActivateProduct,
+    bulkDeleteProduct,
     lowStockProducts,
     fetchLowStock,
     // Categories
